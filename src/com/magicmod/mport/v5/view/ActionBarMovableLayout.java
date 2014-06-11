@@ -909,16 +909,15 @@ _L10:
     
     
     protected void springBack() {
-        int i;
-        if (this.mIsSpringBackEnabled) {
-            i = getScrollRange();
-            if (this.mMotionY <= i / 2)
-                break label51;
-        }
-        label51: for (int j = i - this.mMotionY;; j = -this.mMotionY) {
-            this.mScroller.startScroll(0, this.mMotionY, 0, j, 800);
+        if (mIsSpringBackEnabled) {
+            int range = getScrollRange();
+            int dy;
+            if (mMotionY > range / 2)
+                dy = range - mMotionY;
+            else
+                dy = -mMotionY;
+            mScroller.startScroll(0, mMotionY, 0, dy, 800);
             postInvalidateOnAnimation();
-            return;
         }
     }
 
