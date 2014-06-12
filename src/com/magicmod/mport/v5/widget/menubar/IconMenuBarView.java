@@ -4,11 +4,20 @@ package com.magicmod.mport.v5.widget.menubar;
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.content.Context;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.animation.LayoutAnimationController;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+
+import com.magicmod.mport.util.UiUtils;
+import com.miui.internal.R;
+
+import miui.R.menu;
 
 public class IconMenuBarView extends FrameLayout implements MenuBar.ItemInvoker, MenuBarView,
         View.OnClickListener {
@@ -169,7 +178,7 @@ _L2:
 _L3:*/
     }
 
-    protected IconMenuBarPrimaryItemView createMoreItemView(
+    /*protected IconMenuBarPrimaryItemView createMoreItemView(
             IconMenuBarPrimaryItemView paramIconMenuBarPrimaryItemView, int paramInt,
             Drawable paramDrawable1, Drawable paramDrawable2) {
         if (paramIconMenuBarPrimaryItemView != null)
@@ -189,6 +198,28 @@ _L3:*/
                 localIconMenuBarPrimaryItemView.setBackground(paramDrawable2);
             return localIconMenuBarPrimaryItemView;
         }
+    }*/
+    
+    protected IconMenuBarPrimaryItemView createMoreItemView(IconMenuBarPrimaryItemView convertView,
+            int iconMenuBarPrimaryItemResId, Drawable moreIconDrawable,
+            Drawable moreIconBackgroundDrawable) {
+        IconMenuBarPrimaryItemView itemView;
+        if (convertView != null)
+            itemView = convertView;
+        else
+            itemView = (IconMenuBarPrimaryItemView) View.inflate(mContext,
+                    iconMenuBarPrimaryItemResId, null);
+        itemView.setText(mContext.getResources().getText(/*0x60c01fc*/R.string.v5_icon_menu_bar_more_item_label));
+        itemView.setCompoundDrawablesWithIntrinsicBounds(null, moreIconDrawable,
+                null, null);
+        itemView.setEnabled(true);
+        itemView.setCheckable(true);
+        itemView.setOnClickListener(this);
+        itemView.setItemInvoker(this);
+        mMoreIconView = itemView;
+        if (moreIconBackgroundDrawable != null)
+            itemView.setBackground(moreIconBackgroundDrawable);
+        return itemView;
     }
 
     protected void ensureVisibility() {
@@ -228,12 +259,12 @@ _L3:*/
         return 0;
     }
 
-    public void initialize(MenuBar paramMenuBar) {
-        this.mMenu = paramMenuBar;
+    public void initialize(MenuBar menu) {
+        this.mMenu = menu;
     }
 
-    public boolean invokeItem(MenuBarItem paramMenuBarItem) {
-        boolean bool = this.mMenu.performItemAction(paramMenuBarItem, 0);
+    public boolean invokeItem(MenuBarItem item) {
+        boolean bool = this.mMenu.performItemAction(item, 0);
         if (bool)
             requestExpand(false);
         return bool;
@@ -243,8 +274,9 @@ _L3:*/
         return this.mIsExpended;
     }
 
-    public void onClick(View paramView) {
-        switch (paramView.getId()) {
+    @Override
+    public void onClick(View v) {
+        /*switch (v.getId()) {
             default:
             case 101384354:
             case 101384355:
@@ -252,11 +284,17 @@ _L3:*/
         while (true) {
             return;
             onMoreItemClick();
+        }*/
+        switch (v.getId()) {
+            case R.id.v5_icon_menu_bar_dim_container: //0x60b00a2
+            case R.id.v5_icon_menu_bar_primary_item: //0x60b00a3
+                onMoreItemClick();
+                break;
         }
     }
 
     protected void onFinishInflate() {
-        super.onFinishInflate();
+        /*super.onFinishInflate();
         this.mDimContainer = findViewById(101384354);
         this.mDimContainer.setOnClickListener(this);
         this.mPrimaryContainer = ((LinearLayout) findViewById(101384356));
@@ -280,45 +318,73 @@ _L3:*/
         this.mPrimaryContainerExpanedBackground = UiUtils.getDrawable(getContext(), 100728958);
         if (this.mPrimaryContainerExpanedBackground != null)
             this.mPrimaryContainerExpanedBackground.setAlpha(0);
-        this.mSecondaryContainer = ((LinearLayout) findViewById(101384357));
+        this.mSecondaryContainer = ((LinearLayout) findViewById(101384357));*/
+        super.onFinishInflate();
+        mDimContainer = findViewById(/*0x60b00a2*/R.id.v5_icon_menu_bar_dim_container);
+        mDimContainer.setOnClickListener(this);
+        mPrimaryContainer = (LinearLayout) findViewById(/*0x60b00a4*/R.id.v5_icon_menu_bar_real_primary_container);
+        mPrimaryContainer.setOnTouchListener(new android.view.View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionevent) {
+                boolean flag;
+                if (motionevent.getY() > (float) mPrimaryContainer.getPaddingTop())
+                    flag = true;
+                else
+                    flag = false;
+                return flag;
+            }
+        });
+        mPrimaryContainer.setLayoutAnimation(null);
+        mPrimaryContainerCollapsedBackground = mPrimaryContainer.getBackground();
+        Rect padding = new Rect();
+        if (mPrimaryContainerCollapsedBackground != null) {
+            mPrimaryContainerCollapsedBackground.getPadding(padding);
+            mPrimaryContainerHeight = mPrimaryContainerCollapsedBackground.getIntrinsicHeight()
+                    - padding.bottom - padding.top;
+        }
+        mPrimaryContainerExpanedBackground = UiUtils.getDrawable(getContext(), /*0x601007e*/R.attr.v5_menu_primary_mask_bg);
+        if (mPrimaryContainerExpanedBackground != null)
+            mPrimaryContainerExpanedBackground.setAlpha(0);
+        mSecondaryContainer = (LinearLayout) findViewById(/*0x60b00a5*/R.id.v5_icon_menu_bar_secondary_container);
     }
 
-    protected void onLayout(boolean paramBoolean, int paramInt1, int paramInt2, int paramInt3,
-            int paramInt4) {
-        int i = paramInt4 - paramInt2;
-        this.mDimContainer.layout(paramInt1, paramInt2, paramInt3, paramInt4);
-        this.mPrimaryContainer.layout(paramInt1, i - this.mPrimaryContainer.getMeasuredHeight(),
-                paramInt3, paramInt4);
-        this.mSecondaryContainer.layout(paramInt1, paramInt4, paramInt3, paramInt4
-                + this.mSecondaryContainer.getMeasuredHeight());
+    protected void onLayout(boolean changed, int l, int t, int r,
+            int b) {
+        int height = b - t;
+        mDimContainer.layout(l, t, r, b);
+        mPrimaryContainer.layout(l, height - mPrimaryContainer.getMeasuredHeight(),
+                r, b);
+        mSecondaryContainer.layout(l, b, r, b
+                + mSecondaryContainer.getMeasuredHeight());
     }
 
     void onMoreItemClick() {
-        if (this.mMoreIconView != null)
-            if (this.mMoreIconView.isSelected())
-                break label26;
-        label26: for (boolean bool = true;; bool = false) {
-            requestExpand(bool);
-            return;
+        if (mMoreIconView != null) {
+            boolean flag;
+            if (!mMoreIconView.isSelected())
+                flag = true;
+            else
+                flag = false;
+            requestExpand(flag);
         }
     }
 
-    public void onScroll(float paramFloat, boolean paramBoolean1, boolean paramBoolean2) {
-        if (paramBoolean2)
+    public void onScroll(float percent, boolean fromHasMenuBar, boolean toHasMenuBar) {
+        if (toHasMenuBar)
             ensureVisibility();
-        setAlpha(computeAlpha(paramFloat, paramBoolean1, paramBoolean2));
-        float f = computeTranslationY(paramFloat, paramBoolean1, paramBoolean2);
-        if ((!paramBoolean1) || (!paramBoolean2))
-            this.mPrimaryContainer.setTranslationY(f);
-        int i = this.mPrimaryContainer.getChildCount();
-        for (int j = 0; j < i; j++)
-            this.mPrimaryContainer.getChildAt(j).setTranslationY(f);
+        setAlpha(computeAlpha(percent, fromHasMenuBar, toHasMenuBar));
+        float translationY = computeTranslationY(percent, fromHasMenuBar, toHasMenuBar);
+        if ((!fromHasMenuBar) || (!toHasMenuBar))
+            mPrimaryContainer.setTranslationY(translationY);
+        int count = mPrimaryContainer.getChildCount();
+        for (int j = 0; j < count; j++)
+            mPrimaryContainer.getChildAt(j).setTranslationY(translationY);
     }
 
-    public void onScrollStateChanged(int paramInt) {
+    public void onScrollStateChanged(int state) {
     }
 
-    boolean requestExpand(boolean paramBoolean) {
+    /*boolean requestExpand(boolean paramBoolean) {
         boolean bool = false;
         if ((this.mExpandAnimator != null) && (this.mExpandAnimator.isRunning())
                 && (this.mIsExpended)) {
@@ -347,14 +413,80 @@ _L3:*/
                     1.0F, 0.0F
             });
         }
-    }
+    }*/
+    boolean requestExpand(boolean expand) {
+        boolean flag1 = false;
+        if (mExpandAnimator == null || !mExpandAnimator.isRunning() || !mIsExpended) { // goto
+                                                                                       // _L2
+            if (mIsExpended == expand) { // goto _L4
+                return flag1;
+            } else { // goto _L3
+                mIsExpended = expand;
+                if (expand)
+                    mExpandAnimator.setFloatValues(new float[] {
+                        1.0F
+                    });
+                else
+                    mExpandAnimator.setFloatValues(new float[] {
+                            1.0F, 0.0F
+                    });
+                mPreLayerType = getLayerType();
+                setLayerType(2, null);
+                mExpandAnimator.setDuration(mExpandDuration);
+                mExpandAnimator.addListener(getAnimatorListener());
+                mExpandAnimator.start();
+                // if(true) goto _L6; else goto _L5
+                flag1 = true;
+            }
+            // goto _L4; else goto _L3
+        } else { // goto _L1
+            if (!mIsExpended)
+                flag1 = true;
+            mIsExpended = flag1;
+            updateMenuState();
+            mExpandAnimator.reverse();
+        }
+        return flag1;
+         
+            //goto _L2; else goto _L1
+        /*
+_L1:
+        if(!mIsExpended)
+            flag1 = true;
+        mIsExpended = flag1;
+        updateMenuState();
+        mExpandAnimator.reverse();
+_L6:
+        flag1 = true;
+_L4:
+        return flag1;
+_L2:
+        if(mIsExpended == flag) goto _L4; else goto _L3
+_L3:
+        mIsExpended = flag;
+        if(flag)
+            mExpandAnimator.setFloatValues(new float[] {
+                1.0F
+            });
+        else
+            mExpandAnimator.setFloatValues(new float[] {
+                1.0F, 0.0F
+            });
+        mPreLayerType = getLayerType();
+        setLayerType(2, null);
+        mExpandAnimator.setDuration(mExpandDuration);
+        mExpandAnimator.addListener(getAnimatorListener());
+        mExpandAnimator.start();
+        if(true) goto _L6; else goto _L5
+_L5:*/
+    }  
 
-    void setAnimationPercent(float paramFloat) {
-        this.mAnimationPercent = paramFloat;
-        float f = paramFloat * -this.mSecondaryContainer.getHeight();
-        this.mPrimaryContainer.setTranslationY(f);
-        this.mSecondaryContainer.setTranslationY(f);
-        this.mDimContainer.setAlpha(paramFloat);
+    void setAnimationPercent(float percent) {
+        mAnimationPercent = percent;
+        float transition = percent *(float)( -mSecondaryContainer.getHeight());
+        mPrimaryContainer.setTranslationY(transition);
+        mSecondaryContainer.setTranslationY(transition);
+        mDimContainer.setAlpha(percent);
     }
 
     public void setPrimaryContainerLayoutAnimation(
@@ -362,24 +494,25 @@ _L3:*/
         this.mPrimaryContainer.setLayoutAnimation(paramLayoutAnimationController);
     }
 
-    public void setPrimaryMaskDrawable(Drawable paramDrawable) {
-        if (this.mPrimaryContainer.getBackground() == this.mPrimaryContainerExpanedBackground)
-            this.mPrimaryContainer.setBackground(paramDrawable);
-        this.mPrimaryContainerExpanedBackground = paramDrawable;
+    public void setPrimaryMaskDrawable(Drawable drawable) {
+        if (mPrimaryContainer.getBackground() == mPrimaryContainerExpanedBackground)
+            mPrimaryContainer.setBackground(drawable);
+        mPrimaryContainerExpanedBackground = drawable;
     }
 
     public void setSecondaryContainerLayoutAnimation(
-            LayoutAnimationController paramLayoutAnimationController) {
-        this.mSecondaryContainer.setLayoutAnimation(paramLayoutAnimationController);
+            LayoutAnimationController animation) {
+        this.mSecondaryContainer.setLayoutAnimation(animation);
     }
 
     public static class LayoutParams extends ViewGroup.MarginLayoutParams {
-        public LayoutParams(int paramInt1, int paramInt2) {
-            super(paramInt2);
+
+        public LayoutParams(Context c, AttributeSet attrs) {
+            super(c, attrs);
         }
 
-        public LayoutParams(Context paramContext, AttributeSet paramAttributeSet) {
-            super(paramAttributeSet);
+        public LayoutParams(int width, int height) {
+            super(width, height);
         }
     }
 }
