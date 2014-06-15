@@ -815,21 +815,21 @@ _L5:
         public MenuBarAnimatorListener() {
         }
 
-        public void onAnimationCancel(Animator paramAnimator) {
-            if (paramAnimator == IconMenuBarPresenter.this.mOpenMenuBarAnimator) {
+        public void onAnimationCancel(Animator animator) {
+            if (animator == IconMenuBarPresenter.this.mOpenMenuBarAnimator) {
                 IconMenuBarPresenter.this.mMenuView.setAlpha(1.0F);
-                LinearLayout localLinearLayout = IconMenuBarPresenter.this.mMenuView
+                LinearLayout primaryContainer = IconMenuBarPresenter.this.mMenuView
                         .getPrimaryContainer();
-                localLinearLayout.setTranslationY(0.0F);
-                int i = localLinearLayout.getChildCount();
-                for (int j = 0; j < i; j++)
-                    localLinearLayout.getChildAt(j).setTranslationY(0.0F);
+                primaryContainer.setTranslationY(0.0F);
+                int count = primaryContainer.getChildCount();
+                for (int j = 0; j < count; j++)
+                    primaryContainer.getChildAt(j).setTranslationY(0.0F);
             }
         }
 
-        public void onAnimationEnd(Animator paramAnimator) {
+        /*public void onAnimationEnd(Animator animator) {
             if (IconMenuBarPresenter.this.mCallback != null) {
-                if (paramAnimator != IconMenuBarPresenter.this.mOpenMenuBarAnimator)
+                if (animator != IconMenuBarPresenter.this.mOpenMenuBarAnimator)
                     break label62;
                 IconMenuBarPresenter.this.mMenuView.setVisibility(0);
                 IconMenuBarPresenter.this.mCallback.onOpenMenu(IconMenuBarPresenter.this.mMenu,
@@ -843,6 +843,25 @@ _L5:
                         true);
                 IconMenuBarPresenter.access$302(IconMenuBarPresenter.this, null);
             }
+        }*/
+        public void onAnimationEnd(Animator animator) {
+            if (mCallback != null)
+                //if (animator == IconMenuBarPresenter.access$000(IconMenuBarPresenter.this)) {
+                if (animator == IconMenuBarPresenter.this.mOpenMenuBarAnimator) {
+                    //IconMenuBarPresenter.access$100(IconMenuBarPresenter.this).setVisibility(0);
+                    IconMenuBarPresenter.this.mMenuView.setVisibility(0);
+                    //mCallback._mth0(IconMenuBarPresenter.access$200(IconMenuBarPresenter.this),
+                    //        true);
+                    mCallback.onOpenMenu(mMenu, true);
+                    //IconMenuBarPresenter.access$002(IconMenuBarPresenter.this, null);
+                } else {
+                    //IconMenuBarPresenter.access$100(IconMenuBarPresenter.this).setVisibility(8);
+                    IconMenuBarPresenter.this.mMenuView.setVisibility(8);
+                    //mCallback._mth0(IconMenuBarPresenter.access$200(IconMenuBarPresenter.this),
+                    //        true);
+                    mCallback.onCloseMenu(mMenu, false);
+                    //IconMenuBarPresenter.access$302(IconMenuBarPresenter.this, null);
+                }
         }
 
         public void onAnimationRepeat(Animator paramAnimator) {
