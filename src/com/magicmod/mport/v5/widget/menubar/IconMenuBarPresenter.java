@@ -499,7 +499,7 @@ _L3:*/
                         MenuBarItem item = (MenuBarItem)visibleItems.get(i); //v10
                         item.setIsSecondary(false);
                         View convertView = container.getChildAt(i); //v8
-                        MenuBarItem oldItem = null;
+                        MenuBarItem oldItem = null; //v16
                         if ((convertView instanceof MenuBarView.ItemView) == true) { //cond_7 in
                             oldItem = ((MenuBarView.ItemView)convertView).getItemData(); //v16
                         } else {
@@ -535,17 +535,74 @@ _L3:*/
                             if (mMoreView != moreView) {//cond_a in
                                 addItemView(container, mMoreView, i);
                             } ////cond_a after
-                            container = mMenuView.getSecondaryContainer();
-                        
-                        
-                        
-                        
-                        
+                            container = mMenuView.getSecondaryContainer(); //goto_5
+                            int childIndex = 0; //v5 v6
+                            //:goto_4
+                            //if (i < itemCount) {//cond_13 in
+                            while(i < itemCount) {
+                                MenuBarItem item = (MenuBarItem)visibleItems.get(i); //v10
+                                item.setIsSecondary(true);
+                                childIndex++;
+                                View convertView = container.getChildAt(childIndex); //v8
+                                MenuBarItem oldItem = null; //v16
+                                if ((convertView instanceof MenuBarView.ItemView) == true) { //cond_d in
+                                    oldItem = ((MenuBarView.ItemView)convertView).getItemData();
+                                    //:goto_5
+                                    View itemView = getPrimaryItemView(item, convertView); //v12
+                                    if (item != oldItem) { //cond_b in
+                                        itemView.setPressed(false);
+                                        itemView.jumpDrawablesToCurrentState();
+                                    } //else cond_b after
+                                    if (itemView != convertView) { //cond_c in
+                                        //i - primaryCount;
+                                        addItemView(container, itemView, i - primaryCount);
+                                        ((IconMenuBarSecondaryItemView)itemView).setItemInvoker(mMenuView);
+                                    } //else cond_c after
+                                    i++;
+                                    childIndex++;
+                                    //goto :goto_4
+                                } //else cond_d after
+                                oldItem = null;
+                                goto :goto_5;
+                                
+                            } //else cond_13 after
+                            //.restart local v5       #childIndex:I
+                            goto :goto_6
                         } //else cond_9 after
+                        
+                        //(IconMenuBarPrimaryItemView)moreView
+                        //mMoreView = mMenuView.createMoreItemView((IconMenuBarPrimaryItemView)view, mIconMenuBarPrimaryItemResId, mMoreIconDrawable, mMoreIconBackgroundDrawable);
+                        
                     } //else /cond_f after
                     //v20, 0x0
                     mMoreView = null;
-                    
+                    //if (i < container.getChildCount()) { //cond_11 in
+                    //    if (filterLeftoverView(container, i) == false) { //cond_10 in
+                    //        i++;
+                            //goto goto_7
+                    //    } //else cond_10 after
+                    //} //else cond_11 after
+                    while(i < container.getChildCount()) {
+                        if (filterLeftoverView(container, i) == false) {
+                            i++;
+                        }
+                    }
+                    //cond_11 after
+                    i = 0;
+                    container = mMenuView.getSecondaryContainer();
+                    //if (i < container.getChildCount()) { //cond_0 in
+                    //    if (filterLeftoverView(container, i) == false) { //cond_12 in
+                     //       i++;
+                     //       //goto :goto_8
+                     //   } //else cond_12 after
+                    //} //else cond_0 after
+                    while (i < container.getChildCount()) {
+                        if (filterLeftoverView(container, i) == false) {
+                            i++;
+                        }
+                    }
+                    //cond_0 after
+                    return; //return-void
                 } //else { //cond_0 后
                 return; //return-void
             } // else cond_0 after
