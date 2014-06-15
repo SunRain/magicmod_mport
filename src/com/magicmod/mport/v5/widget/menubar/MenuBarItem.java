@@ -319,7 +319,7 @@ public class MenuBarItem implements MenuItem {
             this = setIcon(this.mMenu.getContext().getResources().getDrawable(paramInt));
         }*/
         if(iconResId != 0)
-            this = setIcon(mMenu.getContext().getResources().getDrawable(i));
+            return setIcon(mMenu.getContext().getResources().getDrawable(i));
         return this;
     }
 

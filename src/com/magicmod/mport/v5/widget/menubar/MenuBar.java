@@ -1,8 +1,12 @@
 
 package com.magicmod.mport.v5.widget.menubar;
 
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.view.Menu;
+import android.view.MenuItem;
+import android.view.SubMenu;
 
 import java.util.ArrayList;
 
