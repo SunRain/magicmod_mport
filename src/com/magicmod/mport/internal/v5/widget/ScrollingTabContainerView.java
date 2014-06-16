@@ -1,6 +1,12 @@
 
 package com.magicmod.mport.internal.v5.widget;
 
+import android.animation.ObjectAnimator;
+import android.content.Context;
+import android.widget.ImageView;
+
+import com.magicmod.mport.v5.app.MiuiActionBar;
+
 public class ScrollingTabContainerView extends
         com.android.internal.widget.ScrollingTabContainerView implements
         MiuiActionBar.FragmentViewPagerChangeListener {
