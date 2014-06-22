@@ -9,6 +9,7 @@ import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
+import android.view.ActionMode;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -135,47 +136,47 @@ public class ActionBarContextView extends com.android.internal.widget.ActionBarC
 
     protected Animator makeInOutAnimator(int visibilityi)
     {
-        ActionMenuView actionmenuview = (ActionMenuView).mMenuView;
-        int j = actionmenuview.getPrimaryContainerHeight();
-        float f = actionmenuview.getTranslationY();
-        float f1;
+        ActionMenuView menuView = (ActionMenuView).mMenuView;
+        int primaryHeight = menuView.getPrimaryContainerHeight();
+        float menuViewTranslationY = menuView.getTranslationY();
+        float topAnimTransFrom;
         float f2;
         float f3;
         float f4;
-        Object obj;
+        Object topAnim;
         if(visibilityi == 0)
         {
-            f1 = -super.mContentHeight;
+            topAnimTransFrom = -mContentHeight;
             f2 = 0.0F;
-            f3 = f + (float)j;
-            f4 = f;
+            f3 = menuViewTranslationY + (float)primaryHeight;
+            f4 = menuViewTranslationY;
         } else
         {
-            f1 = 0.0F;
-            f2 = -super.mContentHeight;
-            f3 = f;
-            f4 = f + (float)j;
+            topAnimTransFrom = 0.0F;
+            f2 = -mContentHeight;
+            f3 = menuViewTranslationY;
+            f4 = menuViewTranslationY + (float)primaryHeight;
         }
-        obj = ObjectAnimator.ofFloat(this, "TranslationY", new float[] {
-            f1, f2
+        topAnim = ObjectAnimator.ofFloat(this, "TranslationY", new float[] {
+            topAnimTransFrom, f2
         });
-        if(!super.mSplitActionBar)
+        if(!mSplitActionBar)
         {
-            ((ObjectAnimator) (obj)).addListener(super.mVisAnimListener.withFinalVisibility(visibilityi));
-            ((ObjectAnimator) (obj)).addListener(this);
+            ((ObjectAnimator) (topAnim)).addListener(mVisAnimListener.withFinalVisibility(visibilityi));
+            ((ObjectAnimator) (topAnim)).addListener(this);
         } else
         {
-            ObjectAnimator objectanimator = ObjectAnimator.ofFloat(super.mMenuView, "TranslationY", new float[] {
+            ObjectAnimator bottomAnim = ObjectAnimator.ofFloat(mMenuView, "TranslationY", new float[] {
                 f3, f4
             });
-            AnimatorSet animatorset = new AnimatorSet();
-            animatorset.play(((Animator) (obj))).with(objectanimator);
-            animatorset.addListener(super.mVisAnimListener.withFinalVisibility(visibilityi));
-            animatorset.addListener(this);
-            animatorset.setDuration(200L);
-            obj = animatorset;
+            AnimatorSet set = new AnimatorSet();
+            set.play(((Animator) (topAnim))).with(bottomAnim);
+            set.addListener(super.mVisAnimListener.withFinalVisibility(visibilityi));
+            set.addListener(this);
+            set.setDuration(200L);
+            topAnim = set;
         }
-        return ((Animator) (obj));
+        return ((Animator) (topAnim));
     }
 
     protected int measureChildView(View child, int availableWidth, int childSpecHeight, int spacing) {
@@ -199,38 +200,38 @@ public class ActionBarContextView extends com.android.internal.widget.ActionBarC
     }
 
     protected boolean miuiInitTitle() {
-        TextView localTextView = getTitleView();
-        LinearLayout localLinearLayout = getTitleLayout();
-        int i = UiUtils.resolveAttribute(this.mContext, R.attr.v5_action_mode_title_layout);
-        if (localLinearLayout == null) {
-            LayoutInflater localLayoutInflater = LayoutInflater.from(this.mContext);
-            if (i != 0)
-                localLinearLayout = (LinearLayout) localLayoutInflater.inflate(i, this, false);
-            if (localLinearLayout != null) {
-                this.mButton1 = ((TextView) localLinearLayout.findViewById(com.android.internal.R.id.button1));
-                this.mButton2 = ((TextView) localLinearLayout.findViewById(com.android.internal.R.id.button2));
-                localTextView = (TextView) localLinearLayout.findViewById(com.android.internal.R.id.title);
-                if (this.mButton1 != null) {
-                    this.mButton1.setOnClickListener(this);
-                    this.mButton1.setText(this.mButton1MenuItem.getTitle());
+        TextView titleView = getTitleView();
+        LinearLayout titleLayout = getTitleLayout();
+        int titleLayoutResId = UiUtils.resolveAttribute(mContext, R.attr.v5_action_mode_title_layout);
+        if (titleLayout == null) {
+            LayoutInflater inflater = LayoutInflater.from(mContext);
+            if (titleLayoutResId != 0)
+                titleLayout = (LinearLayout) inflater.inflate(titleLayoutResId, this, false);
+            if (titleLayout != null) {
+                mButton1 = ((TextView) titleLayout.findViewById(com.android.internal.R.id.button1));
+                mButton2 = ((TextView) titleLayout.findViewById(com.android.internal.R.id.button2));
+                titleView = (TextView) titleLayout.findViewById(com.android.internal.R.id.title);
+                if (mButton1 != null) {
+                    mButton1.setOnClickListener(this);
+                    mButton1.setText(mButton1MenuItem.getTitle());
                 }
-                if (this.mButton2 != null) {
-                    this.mButton2.setOnClickListener(this);
-                    this.mButton2.setText(this.mButton2MenuItem.getTitle());
+                if (mButton2 != null) {
+                    mButton2.setOnClickListener(this);
+                    mButton2.setText(mButton2MenuItem.getTitle());
                 }
-                if (localTextView != null) {
-                    int j = getTitleStyleRes();
-                    if (j != 0)
-                        localTextView.setTextAppearance(this.mContext, j);
-                    setTitleView(localTextView);
+                if (titleView != null) {
+                    int titleViewStyleRes = getTitleStyleRes();
+                    if (titleViewStyleRes != 0)
+                        titleView.setTextAppearance(this.mContext, titleViewStyleRes);
+                    setTitleView(titleView);
                 }
             }
         }
-        if (localTextView != null)
-            localTextView.setText(getTitle());
-        if ((localLinearLayout != null) && (localLinearLayout.getParent() == null)) {
-            addView(localLinearLayout);
-            setTitleLayout(localLinearLayout);
+        if (titleView != null)
+            titleView.setText(getTitle());
+        if ((titleLayout != null) && (titleLayout.getParent() == null)) {
+            addView(titleLayout);
+            setTitleLayout(titleLayout);
         }
         return true;
     }
@@ -246,15 +247,15 @@ public class ActionBarContextView extends com.android.internal.widget.ActionBarC
          //               localActionMenuItem);
           //  return;
         //}
-        ActionMenuItem actionmenuitem;
-        EditActionMode editactionmode;
+        ActionMenuItem item;
+        EditActionMode actionMode;
         if(v.getId() == com.android.internal.R.id.button1)
-            actionmenuitem = mButton1MenuItem;
+            item = mButton1MenuItem;
         else
-            actionmenuitem = mButton2MenuItem;
-        editactionmode = (EditActionMode)mActionMode.get();
-        if(editactionmode != null)
-            editactionmode.onMenuItemSelected((MenuBuilder)(MenuBuilder)editactionmode.getMenu(), actionmenuitem);
+            item = mButton2MenuItem;
+        actionMode = (EditActionMode)mActionMode.get();
+        if(actionMode != null)
+            actionMode.onMenuItemSelected((MenuBuilder)(MenuBuilder)actionMode.getMenu(), item);
     }
 
     protected void onConfigurationChanged(Configuration newConfig) {
@@ -268,9 +269,9 @@ public class ActionBarContextView extends com.android.internal.widget.ActionBarC
     protected void onLayout(boolean changed, int left, int top, int right,
             int bottom) {
         super.onLayout(changed, left, top, right, bottom);
-        if (this.mRequestAniamtion) {
+        if (mRequestAniamtion) {
             makeInOutAnimator(0).start();
-            this.mRequestAniamtion = false;
+            mRequestAniamtion = false;
         }
     }
 
@@ -295,7 +296,7 @@ public class ActionBarContextView extends com.android.internal.widget.ActionBarC
         return i;
     }
 
-    public void setButton(int paramInt, CharSequence paramCharSequence) {
+    /*public void setButton(int paramInt, CharSequence paramCharSequence) {
         if (paramInt == 16908313)
             if (this.mButton1 != null) {
                 this.mButton1.setText(paramCharSequence);
@@ -308,25 +309,41 @@ public class ActionBarContextView extends com.android.internal.widget.ActionBarC
                 this.mButton2MenuItem.setTitle(paramCharSequence);
             }
         }
-    }
-
-    public void setContentHeight(int paramInt) {
-    }
-
-    public void setCustomView(View paramView) {
-        throw new UnsupportedOperationException("setCustomView is not supported");
-    }
-
-    public void setSplitActionBar(boolean paramBoolean) {
-        super.setSplitActionBar(paramBoolean);
-        if ((paramBoolean) && (this.mActionMenuPresenter != null)) {
-            this.mMenuView = ((com.android.internal.view.menu.ActionMenuView) this.mActionMenuPresenter
-                    .getMenuView(this));
-            this.mMenuView.getLayoutParams().height = -2;
+    }*/
+    public void setButton(int whichButton, CharSequence text) {
+        if (whichButton != /* 0x1020019 */com.android.internal.R.id.button1) { // goto
+                                                                               // _L2;
+            if (whichButton == /* 0x102001a */com.android.internal.R.id.button2 
+                    && mButton2 != null) {
+                mButton2.setText(text);
+                mButton2MenuItem.setTitle(text);
+            }
+            return;
+        } else { // goto _L1
+            if (mButton1 != null) {
+                mButton1.setText(text);
+                mButton1MenuItem.setTitle(text);
+            }
         }
     }
 
-    public void setSubtitle(CharSequence paramCharSequence) {
+    public void setContentHeight(int height) {
+    }
+
+    public void setCustomView(View view) {
+        throw new UnsupportedOperationException("setCustomView is not supported");
+    }
+
+    public void setSplitActionBar(boolean split) {
+        super.setSplitActionBar(split);
+        if ((split) && (mActionMenuPresenter != null)) {
+            mMenuView = ((com.android.internal.view.menu.ActionMenuView) mActionMenuPresenter
+                    .getMenuView(this));
+            mMenuView.getLayoutParams().height = -2;
+        }
+    }
+
+    public void setSubtitle(CharSequence subtitle) {
         throw new UnsupportedOperationException("setSubtitle is not supported");
     }
 }

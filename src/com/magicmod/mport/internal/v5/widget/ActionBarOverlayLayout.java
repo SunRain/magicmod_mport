@@ -97,7 +97,7 @@ public class ActionBarOverlayLayout extends com.android.internal.widget.ActionBa
     public boolean dispatchKeyEvent(KeyEvent event) {
         //int flag = 0x1;
         boolean handled = false;
-        if (event.getAction() == flag && event.getKeyCode() == 4) {
+        if (event.getAction() == 1 && event.getKeyCode() == 4) {
             handled = false | getActionView().hideOverflowMenu()
                     | getActionBarContextView().hideOverflowMenu();
         }

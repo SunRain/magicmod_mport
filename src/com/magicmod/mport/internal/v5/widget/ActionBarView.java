@@ -2,15 +2,21 @@
 package com.magicmod.mport.internal.v5.widget;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.android.internal.view.menu.MenuPresenter;
 import com.magicmod.mport.internal.v5.app.ActionBarImpl;
 import com.magicmod.mport.internal.v5.view.menu.ActionMenuView;
+import com.magicmod.mport.util.UiUtils;
 import com.miui.internal.R;
 
 public class ActionBarView extends com.android.internal.widget.ActionBarView {
@@ -37,41 +43,44 @@ public class ActionBarView extends com.android.internal.widget.ActionBarView {
 
     protected void ensureSubtitleView() {
         if ((this.mUseDefaultTitleLayout) && (getSubtitleView() == null)) {
-            TextView localTextView1 = getTitleView();
-            ViewGroup localViewGroup = (ViewGroup) localTextView1.getParent();
-            localViewGroup.removeView(localTextView1);
-            LinearLayout localLinearLayout = new LinearLayout(this.mContext);
-            localLinearLayout.setOrientation(1);
-            localLinearLayout.setGravity(19);
-            LinearLayout.LayoutParams localLayoutParams = new LinearLayout.LayoutParams(-2, -2);
-            localLayoutParams.gravity = 16;
-            localLinearLayout.setLayoutParams(localLayoutParams);
-            localViewGroup.addView(localLinearLayout);
-            localLinearLayout.addView(localTextView1);
-            this.mSubTitleContainer = LayoutInflater.from(this.mContext).inflate(R.layout.v5_action_bar_sub_title_item,//100859931,
-                    localLinearLayout, false);
-            localLinearLayout.addView(this.mSubTitleContainer);
-            TextView localTextView2 = (TextView) this.mSubTitleContainer.findViewById(R.id.v5_action_bar_subtitle);//101384350);
+            TextView titleView = getTitleView();
+            ViewGroup oldParent = (ViewGroup) titleView.getParent();
+            oldParent.removeView(titleView);
+            
+            LinearLayout linearLayout = new LinearLayout(this.mContext);
+            linearLayout.setOrientation(1);
+            linearLayout.setGravity(19);
+            
+            LinearLayout.LayoutParams lParams = new LinearLayout.LayoutParams(-2, -2);
+            lParams.gravity = 16;
+            linearLayout.setLayoutParams(lParams);
+            oldParent.addView(linearLayout);
+            linearLayout.addView(titleView);
+            
+            mSubTitleContainer = LayoutInflater.from(mContext).inflate(R.layout.v5_action_bar_sub_title_item,//100859931,
+                    linearLayout, false);
+            linearLayout.addView(mSubTitleContainer);
+            TextView subtitleView = (TextView) mSubTitleContainer.findViewById(R.id.v5_action_bar_subtitle);//101384350);
             if (getSubtitleStyleRes() != 0)
-                localTextView2.setTextAppearance(this.mContext, getSubtitleStyleRes());
-            setSubtitleView(localTextView2);
-            this.mTertiaryView = ((TextView) this.mSubTitleContainer.findViewById(R.id.v5_action_bar_tertiary_title));//101384351));
+                subtitleView.setTextAppearance(mContext, getSubtitleStyleRes());
+            setSubtitleView(subtitleView);
+            mTertiaryView = ((TextView) mSubTitleContainer.findViewById(R.id.v5_action_bar_tertiary_title));//101384351));
             if (getSubtitleStyleRes() != 0)
-                this.mTertiaryView.setTextAppearance(getContext(), getSubtitleStyleRes());
-            this.mSeperatorView = this.mSubTitleContainer.findViewById(R.id.separator1);//101384321);
+                mTertiaryView.setTextAppearance(getContext(), getSubtitleStyleRes());
+            mSeperatorView = mSubTitleContainer.findViewById(R.id.separator1);//101384321);
         }
     }
 
     public ActionBarImpl getActionBar() {
-        return this.mActionBar;
+        return mActionBar;
     }
 
     ActionMenuView getActionMenuView() {
-        return (ActionMenuView) this.mMenuView;
+        return (ActionMenuView) mMenuView;
     }
 
     public CharSequence getTertiaryTitle() {
-        return this.mTertiaryTitle;
+        return mTertiaryTitle;
     }
 
     public boolean hasTitle() {
@@ -81,7 +90,7 @@ public class ActionBarView extends com.android.internal.widget.ActionBarView {
         return (0x1E & getDisplayOptions()) != 0;
     }
 
-    protected boolean miuiInitTitle()
+    /*protected boolean miuiInitTitle()
     {
       boolean bool1 = true;
       Object localObject = getTitleLayout();
@@ -182,27 +191,120 @@ public class ActionBarView extends com.android.internal.widget.ActionBarView {
         break label362;
         label490: bool1 = false;
       }
+    }*/
+    protected boolean miuiInitTitle() {
+        boolean flag = true;
+        View titleLayout = getTitleLayout();
+        int titleLayoutResId = UiUtils.resolveAttribute(
+                mContext, 
+                R.attr.v5_action_bar_title_layout//0x601003f
+                );
+        
+        boolean flag1;
+        if (titleLayoutResId == /* 0x603001c */R.layout.v5_action_bar_title_item)
+            flag1 = flag;
+        else
+            flag1 = false;
+        
+        mUseDefaultTitleLayout = flag1;
+        if (titleLayout == null) {
+            LayoutInflater inflater = LayoutInflater.from(mContext);
+            if (titleLayoutResId != 0)
+                titleLayout = inflater.inflate(titleLayoutResId, this, false);
+            
+            if (titleLayout != null) {
+                TextView titleView = (TextView) ((View) (titleLayout)).findViewById(/*0x60b00a0*/R.id.v5_action_bar_title);
+                TextView subtitleView = (TextView) ((View) (titleLayout)).findViewById(/*0x60b009e*/R.id.v5_action_bar_subtitle);
+                View titleUpView = ((View) (titleLayout)).findViewById(/*0x60b00af*/R.id.v5_up);
+                mTertiaryView = (TextView) ((View) (titleLayout)).findViewById(/*0x60b009f*/R.id.v5_action_bar_tertiary_title);
+                mSeperatorView = ((View) (titleLayout)).findViewById(/*0x60b0081*/R.id.separator1);
+                mSubTitleContainer = ((View) (titleLayout)).findViewById(/*0x60b009d*/R.id.v5_action_bar_sub_title_container);
+                setTitleLayout((ViewGroup) titleLayout);
+                if (titleView != null) {
+                    if (mUseDefaultTitleLayout && getTitleStyleRes() != 0)
+                        titleView.setTextAppearance(super.mContext, getTitleStyleRes());
+                    if (getTitle() != null)
+                        titleView.setText(getTitle());
+                    setTitleView(titleView);
+                }
+                if (subtitleView != null) {
+                    if (mUseDefaultTitleLayout && getSubtitleStyleRes() != 0)
+                        subtitleView.setTextAppearance(super.mContext, getSubtitleStyleRes());
+                    if (getSubtitle() != null) {
+                        subtitleView.setText(getSubtitle());
+                        subtitleView.setVisibility(0);
+                    }
+                    setSubtitleView(subtitleView);
+                }
+                if (mTertiaryView != null) {
+                    if (mUseDefaultTitleLayout && getSubtitleStyleRes() != 0)
+                        mTertiaryView.setTextAppearance(getContext(), getSubtitleStyleRes());
+                    if (!TextUtils.isEmpty(mTertiaryTitle)) {
+                        mTertiaryView.setText(mTertiaryTitle);
+                        mTertiaryView.setVisibility(0);
+                    }
+                }
+                boolean homeAsUp;
+                boolean showHome;
+                boolean showTitleUp;
+                if ((4 & getDisplayOptions()) != 0)
+                    homeAsUp = flag;
+                else
+                    homeAsUp = false;
+                if ((2 & getDisplayOptions()) != 0)
+                    showHome = flag;
+                else
+                    showHome = false;
+                if (!showHome)
+                    showTitleUp = flag;
+                else
+                    showTitleUp = false;
+                if (titleUpView != null) {
+                    int j;
+                    if (showTitleUp) {
+                        if (homeAsUp)
+                            j = 0;
+                        else
+                            j = 8;
+                    } else {
+                        j = 8;
+                    }
+                    titleUpView.setVisibility(j);
+                    titleUpView.setOnClickListener(getUpClickListener());
+                }
+                if (!homeAsUp || !showTitleUp)
+                    flag = false;
+                ((View) (titleLayout)).setEnabled(flag);
+            }
+        }
+        if (titleLayout != null
+                && mUseDefaultTitleLayout
+                && (getExpandedActionView() != null || TextUtils.isEmpty(getTitle())
+                        && TextUtils.isEmpty(getSubtitle()) && TextUtils.isEmpty(mTertiaryTitle)))
+            ((View) (titleLayout)).setVisibility(8);
+        return super.miuiInitTitle();
     }
 
-    protected void onChildVisibilityChanged(View paramView, int paramInt1, int paramInt2) {
-        super.onChildVisibilityChanged(paramView, paramInt1, paramInt2);
-        if ((paramView == getSubtitleView()) || (paramView == this.mTertiaryView)
-                || (paramView == getTitleLayout()))
+
+    protected void onChildVisibilityChanged(View child, int oldVisibility, int newVisibility) {
+        super.onChildVisibilityChanged(child, oldVisibility, newVisibility);
+        if ((child == getSubtitleView()) || (child == mTertiaryView)
+                || (child == getTitleLayout()))
             updateTitleLayout();
     }
 
-    protected void onConfigurationChanged(Configuration paramConfiguration) {
-        super.onConfigurationChanged(paramConfiguration);
+    protected void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
         if (hasEmbeddedTabs())
             getTabScrollView().setBackground(null);
     }
 
-    public void setActionBar(ActionBarImpl paramActionBarImpl) {
-        this.mActionBar = paramActionBarImpl;
+    public void setActionBar(ActionBarImpl actionBar) {
+        this.mActionBar = actionBar;
     }
 
-    public void setDisplayOptions(int paramInt) {
-        super.setDisplayOptions(paramInt);
+    public void setDisplayOptions(int options) {
+        super.setDisplayOptions(options);
         if (!hasEmbeddedTabs()) {
             ViewParent localViewParent = getParent();
             if (localViewParent != null)
@@ -210,21 +312,21 @@ public class ActionBarView extends com.android.internal.widget.ActionBarView {
         }
     }
 
-    public void setMenu(Menu paramMenu, MenuPresenter.Callback paramCallback) {
-        super.setMenu(paramMenu, paramCallback);
-        if ((isSplitActionBar()) && (this.mMenuView != null)) {
-            ViewGroup.LayoutParams localLayoutParams = this.mMenuView.getLayoutParams();
+    public void setMenu(Menu menu, MenuPresenter.Callback cb) {
+        super.setMenu(menu, cb);
+        if ((isSplitActionBar()) && (mMenuView != null)) {
+            ViewGroup.LayoutParams localLayoutParams = mMenuView.getLayoutParams();
             if (localLayoutParams != null) {
-                FrameLayout.LayoutParams localLayoutParams1 = new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
                         localLayoutParams);
-                localLayoutParams1.height = -2;
-                localLayoutParams1.gravity = 80;
-                this.mMenuView.setLayoutParams(localLayoutParams1);
+                lp.height = -2;
+                lp.gravity = 80;
+                mMenuView.setLayoutParams(lp);
             }
         }
     }
 
-    public void setSubtitle(CharSequence paramCharSequence) {
+    /*public void setSubtitle(CharSequence paramCharSequence) {
         ensureSubtitleView();
         TextView localTextView = getSubtitleView();
         int i;
@@ -241,9 +343,28 @@ public class ActionBarView extends com.android.internal.widget.ActionBarView {
             i = 8;
             break;
         }
+    }*/
+    public void setSubtitle(CharSequence subtitle) {
+        ensureSubtitleView();
+        TextView titleView = getSubtitleView();
+        int oldVisibility;
+        int newVisibility;
+        if (titleView != null)
+            oldVisibility = titleView.getVisibility();
+        else
+            oldVisibility = 8;
+        
+        super.setSubtitle(subtitle);
+        
+        if (titleView != null)
+            newVisibility = titleView.getVisibility();
+        else
+            newVisibility = 8;
+        if (titleView != null && oldVisibility != newVisibility)
+            onChildVisibilityChanged(titleView, oldVisibility, newVisibility);
     }
 
-    public void setTertiaryTitle(CharSequence paramCharSequence) {
+    /*public void setTertiaryTitle(CharSequence paramCharSequence) {
         ensureSubtitleView();
         this.mTertiaryTitle = paramCharSequence;
         int i;
@@ -260,9 +381,27 @@ public class ActionBarView extends com.android.internal.widget.ActionBarView {
                 onChildVisibilityChanged(this.mTertiaryView, i, j);
             return;
         }
+    }*/
+    public void setTertiaryTitle(CharSequence title) {
+        ensureSubtitleView();
+        mTertiaryTitle = title;
+        if (mTertiaryView != null) {
+            boolean isTitleEmpty = TextUtils.isEmpty(title);
+            mTertiaryView.setText(title);
+            int oldVisibility = mTertiaryView.getVisibility();
+            int newVisibility;
+            if (!isTitleEmpty)
+                newVisibility = 0;
+            else
+                newVisibility = 8;
+            mTertiaryView.setVisibility(newVisibility);
+            if (oldVisibility != newVisibility)
+                onChildVisibilityChanged(mTertiaryView, oldVisibility, newVisibility);
+        }
     }
 
-    protected void updateTitleLayout()
+
+    /*protected void updateTitleLayout()
     {
       int i = 0;
       if (!this.mUseDefaultTitleLayout)
@@ -333,6 +472,75 @@ public class ActionBarView extends com.android.internal.widget.ActionBarView {
         break label161;
         label230: i = 8;
       }
+    }*/
+    protected void updateTitleLayout() {
+        int i = 0;
+        if (mUseDefaultTitleLayout) {
+            boolean titleVisible;
+            TextView subTitleView;
+            boolean subTitleVisible;
+            boolean tertiaryTitleVisible;
+            boolean visible;
+            if (getTitleView().getVisibility() == 0)
+                titleVisible = true;
+            else
+                titleVisible = false;
+            
+            subTitleView = getSubtitleView();
+            if (subTitleView != null) {
+                if (subTitleView.getVisibility() == 0)
+                    subTitleVisible = true;
+                else
+                    subTitleVisible = false;
+            } else {
+                subTitleVisible = false;
+            }
+            if (mTertiaryView != null) {
+                if (mTertiaryView.getVisibility() == 0)
+                    tertiaryTitleVisible = true;
+                else
+                    tertiaryTitleVisible = false;
+            } else {
+                tertiaryTitleVisible = false;
+            }
+            if (mSeperatorView != null) {
+                //View view1 = mSeperatorView;
+                //ViewGroup viewgroup;
+                //View view;
+                //int k;
+                if (subTitleVisible && tertiaryTitleVisible) {
+                    //k = 0;
+                    mSeperatorView.setVisibility(0);
+                } else {
+                    //k = 8;
+                    mSeperatorView.setVisibility(8);
+                }
+                //view1.setVisibility(k);
+                //mSeperatorView.setVisibility(k);
+            }
+            if (mSubTitleContainer != null) {
+                //view = mSubTitleContainer;
+                //int j;
+                if (subTitleVisible || tertiaryTitleVisible) {
+                    //j = 0;
+                    mSubTitleContainer.setVisibility(0);
+                } else {
+                    //j = 8;
+                    mSubTitleContainer.setVisibility(8);
+                }
+                //view.setVisibility(j);
+            }
+            if (getExpandedActionView() == null && (8 & getDisplayOptions()) != 0
+                    && (titleVisible || subTitleVisible || tertiaryTitleVisible))
+                visible = true;
+            else
+                visible = false;
+            //viewgroup = getTitleLayout();
+            if (!visible)
+                i = 8;
+            //viewgroup.setVisibility(i);
+            getTitleLayout().setVisibility(i);
+        }
     }
 
     public static abstract interface ActionBarViewHolder {

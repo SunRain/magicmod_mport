@@ -1,20 +1,49 @@
 
 package com.magicmod.mport.internal.v5.widget;
 
-public class SearchActionModeView extends FrameLayout implements Animator.AnimatorListener,
-        ActionModeView, TextWatcher, View.OnClickListener, MessageQueue.IdleHandler {
-    private static final int ANIMATE_IDLE = 0;
-    private static final int ANIMATE_IN = 1;
-    private static final int ANIMATE_OUT = 2;
-    private static final int DEFAULT_ANIMATION_DURATION = 200;
+import android.R;
+import android.animation.Animator;
+import android.animation.Animator.AnimatorListener;
+import android.animation.ObjectAnimator;
+import android.content.Context;
+import android.os.Looper;
+import android.os.MessageQueue;
+import android.os.MessageQueue.IdleHandler;
+import android.renderscript.Element;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.AttributeSet;
+import android.view.ActionMode;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.View.OnClickListener;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+
+import com.magicmod.mport.internal.v5.view.ActionModeView;
+import com.magicmod.mport.internal.v5.view.menu.ActionMenuView;
+import com.magicmod.mport.v5.widget.SearchModeAnimationListener;
+import com.magicmod.mport.v5.widget.SimpleSearchModeAnimationListener;
+
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+
+public class SearchActionModeView extends FrameLayout implements AnimatorListener,
+        ActionModeView, TextWatcher, IdleHandler, OnClickListener {
+    private static final int ANIMATE_IDLE = 0x0;
+    private static final int ANIMATE_IN = 0x1;
+    private static final int ANIMATE_OUT = 0x2;
+    private static final int DEFAULT_ANIMATION_DURATION = 0xc8;//200;
     private ActionBarContainer mActionBarContainer;
     private ActionBarView mActionBarView;
     private WeakReference<View> mAnchorView;
     private WeakReference<View> mAnimateView;
     private int mAnimateViewTranslationYLength;
     private int mAnimateViewTranslationYStart;
-    private int mAnimateVisibility = 8;
-    private int mAnimationMode = 0;
+    private int mAnimateVisibility = 0x8;
+    private int mAnimationMode = 0x0;
     private ImageView mBackView;
     private int mBackViewTranslationXLength;
     private int mBackViewTranslationXStart;
@@ -33,8 +62,8 @@ public class SearchActionModeView extends FrameLayout implements Animator.Animat
     private ActionBarContainer mSplitActionBarContainer;
     private int mTextLengthBeforeChanged;
 
-    public SearchActionModeView(Context paramContext, AttributeSet paramAttributeSet) {
-        super(paramContext, paramAttributeSet);
+    public SearchActionModeView(Context context, AttributeSet attrs) {
+        super(context, attrs);
         setAlpha(0.0F);
     }
 
@@ -43,13 +72,15 @@ public class SearchActionModeView extends FrameLayout implements Animator.Animat
     }
 
     private boolean hasAnchorAndAnimateView() {
-        if ((this.mAnchorView != null) && (this.mAnimateView != null))
-            ;
-        for (boolean bool = true;; bool = false)
-            return bool;
+        boolean flag;
+        if (mAnchorView != null && mAnimateView != null)
+            flag = true;
+        else
+            flag = false;
+        return flag;
     }
 
-    private void notifyAnimation(float paramFloat) {
+    /*private void notifyAnimation(float paramFloat) {
         if (this.mSearchModeAnimationListeners == null)
             ;
         while (true) {
@@ -58,25 +89,35 @@ public class SearchActionModeView extends FrameLayout implements Animator.Animat
                 ((SearchModeAnimationListener) this.mSearchModeAnimationListeners.get(i))
                         .onUpdate(paramFloat);
         }
+    }*/
+    private void notifyAnimation(float percent) {
+        if (mSearchModeAnimationListeners != null) {
+            int i = 0;
+            while (i < mSearchModeAnimationListeners.size()) {
+                ((SearchModeAnimationListener) mSearchModeAnimationListeners.get(i)).onUpdate(percent);
+                i++;
+            }
+        }
     }
 
+
     private void notifyAnimationEnd() {
-        if (this.mSearchModeAnimationListeners == null)
-            ;
-        while (true) {
-            return;
-            for (int i = 0; i < this.mSearchModeAnimationListeners.size(); i++)
-                ((SearchModeAnimationListener) this.mSearchModeAnimationListeners.get(i)).onStop();
+        if (mSearchModeAnimationListeners != null) {
+            int i = 0;
+            while (i < mSearchModeAnimationListeners.size()) {
+                ((SearchModeAnimationListener) mSearchModeAnimationListeners.get(i)).onStop();
+                i++;
+            }
         }
     }
 
     private void notifyAnimationStart() {
-        if (this.mSearchModeAnimationListeners == null)
-            ;
-        while (true) {
-            return;
-            for (int i = 0; i < this.mSearchModeAnimationListeners.size(); i++)
-                ((SearchModeAnimationListener) this.mSearchModeAnimationListeners.get(i)).onStart();
+        if (mSearchModeAnimationListeners != null) {
+            int i = 0;
+            while (i < mSearchModeAnimationListeners.size()) {
+                ((SearchModeAnimationListener) mSearchModeAnimationListeners.get(i)).onStart();
+                i++;
+            }
         }
     }
 
@@ -89,7 +130,7 @@ public class SearchActionModeView extends FrameLayout implements Animator.Animat
         getMessageQueue().removeIdleHandler(this);
     }
 
-    public void addAnimationListener(SearchModeAnimationListener paramSearchModeAnimationListener) {
+    /*public void addAnimationListener(SearchModeAnimationListener paramSearchModeAnimationListener) {
         if (paramSearchModeAnimationListener == null)
             ;
         while (true) {
@@ -98,9 +139,16 @@ public class SearchActionModeView extends FrameLayout implements Animator.Animat
                 this.mSearchModeAnimationListeners = new ArrayList();
             this.mSearchModeAnimationListeners.add(paramSearchModeAnimationListener);
         }
+    }*/
+    public void addAnimationListener(SearchModeAnimationListener listener) {
+        if (listener != null) {
+            if (mSearchModeAnimationListeners == null)
+                mSearchModeAnimationListeners = new ArrayList();
+            mSearchModeAnimationListeners.add(listener);
+        }
     }
 
-    public void afterTextChanged(Editable paramEditable) {
+    /*public void afterTextChanged(Editable paramEditable) {
         int i;
         if (paramEditable == null) {
             i = 0;
@@ -117,15 +165,34 @@ public class SearchActionModeView extends FrameLayout implements Animator.Animat
             label41: if ((this.mTextLengthBeforeChanged == 0) && (this.mDimView != null))
                 this.mDimView.setVisibility(8);
         }
+    }*/
+    @Override
+    public void afterTextChanged(Editable s)
+    {
+        int afterTextChangedLength;
+        if(s == null)
+            afterTextChangedLength = 0;
+        else
+            afterTextChangedLength = s.length();
+        
+        if(afterTextChangedLength != 0) {
+            if(mTextLengthBeforeChanged == 0 && mDimView != null)
+                mDimView.setVisibility(8);
+            return;
+        } else {
+            if(mDimView != null)
+                mDimView.setVisibility(0);
+            showSoftInputPanel(true);
+        }
     }
 
-    protected void allowUpdateContentBorder(boolean paramBoolean) {
-        View localView = ((ViewGroup) getRootView()).getChildAt(0);
-        if ((localView instanceof IActionBarLayout))
-            ((IActionBarLayout) localView).setUpdateContentMarginEnabled(paramBoolean);
+    protected void allowUpdateContentBorder(boolean allow) {
+        View view = ((ViewGroup)getRootView()).getChildAt(0);
+        if ((view instanceof IActionBarLayout))
+            ((IActionBarLayout) view).setUpdateContentMarginEnabled(allow);
     }
 
-    public void animateToVisibility(int paramInt) {
+    /*public void animateToVisibility(int paramInt) {
         if (this.mAnimateVisibility == paramInt) {
             this.mRequestAnimation = false;
             return;
@@ -151,9 +218,34 @@ public class SearchActionModeView extends FrameLayout implements Animator.Animat
             break label20;
             label79: this.mCurrentAnimation.start();
         }
+    }*/
+    public void animateToVisibility(int visibility) {
+        if (mAnimateVisibility == visibility) {
+            mRequestAnimation = false;
+        } else {
+            //int j;
+            if (visibility == 0)
+                mAnimationMode = 1;//j = 1;
+            else
+                mAnimationMode = 2;//j = 2;
+            //mAnimationMode = j;
+            mCurrentAnimation = makeAnimation(visibility);
+            createAnimationListeners();
+            notifyAnimationStart();
+            if (hasAnchorAndAnimateView()) {
+                if (visibility == 0)
+                    allowUpdateContentBorder(false);
+                requestLayout();
+                mRequestAnimation = true;
+            } else {
+                mCurrentAnimation.start();
+            }
+            pollViews();
+        }
     }
 
-    public void beforeTextChanged(CharSequence paramCharSequence, int paramInt1, int paramInt2,
+
+    /*public void beforeTextChanged(CharSequence paramCharSequence, int paramInt1, int paramInt2,
             int paramInt3) {
         if (paramCharSequence == null)
             ;
@@ -161,9 +253,18 @@ public class SearchActionModeView extends FrameLayout implements Animator.Animat
             this.mTextLengthBeforeChanged = i;
             return;
         }
+    }*/
+    public void beforeTextChanged(CharSequence s, int start, int count, int after)
+    {
+        int l;
+        if(s == null)
+            l = 0;
+        else
+            l = s.length();
+        mTextLengthBeforeChanged = l;
     }
 
-    public void closeMode() {
+    /*public void closeMode() {
         if (this.mAnimationMode == 2)
             ;
         while (true) {
@@ -174,35 +275,44 @@ public class SearchActionModeView extends FrameLayout implements Animator.Animat
                 this.mAnimationMode = 2;
             }
         }
+    }*/
+    public void closeMode() {
+        if (mAnimationMode != 2 && mCurrentAnimation != null) {
+            mCurrentAnimation.reverse();
+            mCurrentAnimation = null;
+            mAnimationMode = 2;
+        }
     }
 
     protected void createAnimationListeners() {
-        if (this.mSearchModeAnimationListeners == null)
-            this.mSearchModeAnimationListeners = new ArrayList();
-        this.mSearchModeAnimationListeners.add(new DimViewSearchModeAnimationListener());
-        this.mSearchModeAnimationListeners.add(new SearchViewSearchModeAnimationListener());
+        if (mSearchModeAnimationListeners == null)
+            mSearchModeAnimationListeners = new ArrayList();
+        mSearchModeAnimationListeners.add(new DimViewSearchModeAnimationListener());
+        mSearchModeAnimationListeners.add(new SearchViewSearchModeAnimationListener());
         if (hasAnchorAndAnimateView()) {
-            this.mSearchModeAnimationListeners.add(new ContentViewSearchModeAnimationListener());
-            this.mSearchModeAnimationListeners.add(new ActionBarSearchModeAnimationListener());
-            this.mSearchModeAnimationListeners.add(new SplitActionBarSearchModeAnimationListener());
+            mSearchModeAnimationListeners.add(new ContentViewSearchModeAnimationListener());
+            mSearchModeAnimationListeners.add(new ActionBarSearchModeAnimationListener());
+            mSearchModeAnimationListeners.add(new SplitActionBarSearchModeAnimationListener());
         }
     }
 
     protected void finishAnimation() {
-        if (this.mCurrentAnimation != null) {
-            this.mCurrentAnimation.cancel();
-            this.mCurrentAnimation = null;
+        if (mCurrentAnimation != null) {
+            mCurrentAnimation.cancel();
+            mCurrentAnimation = null;
         }
     }
 
     protected ActionBarContainer getActionBarContainer() {
-        if (this.mActionBarContainer == null) {
-            View localView = getRootView();
-            if (localView != null)
-                this.mActionBarContainer = ((ActionBarContainer) localView
-                        .findViewById(ResourceMapper.resolveReference(this.mContext, 101384199)));
+        if (mActionBarContainer == null) {
+            View decorView = getRootView();
+            if (decorView != null)
+                mActionBarContainer = (ActionBarContainer) decorView.findViewById(ResourceMapper
+                        .resolveReference(mContext,
+                                com.miui.internal.R.id.android_action_bar_container// 0x60b0007
+                        ));
         }
-        return this.mActionBarContainer;
+        return mActionBarContainer;
     }
 
     protected ActionBarView getActionBarView() {
@@ -216,16 +326,17 @@ public class SearchActionModeView extends FrameLayout implements Animator.Animat
     }
 
     protected ActionBarContainer getSplitActionBarContainer() {
-        if (this.mSplitActionBarContainer == null) {
-            View localView = getRootView();
-            if (localView != null)
-                this.mSplitActionBarContainer = ((ActionBarContainer) localView
-                        .findViewById(ResourceMapper.resolveReference(this.mContext, 101384231)));
+        if (mSplitActionBarContainer == null) {
+            View view = getRootView();
+            if (view != null)
+                mSplitActionBarContainer = (ActionBarContainer) view.findViewById(ResourceMapper
+                        .resolveReference(mContext, com.miui.internal.R.id.android_split_action_bar// 0x60b0027
+                        ));
         }
-        return this.mSplitActionBarContainer;
+        return mSplitActionBarContainer;
     }
 
-    protected int getSplitActionBarHeight() {
+    /*protected int getSplitActionBarHeight() {
         int i = 0;
         ActionBarView localActionBarView = getActionBarView();
         ActionMenuView localActionMenuView;
@@ -236,9 +347,22 @@ public class SearchActionModeView extends FrameLayout implements Animator.Animat
         }
         label33: for (i = localActionMenuView.getPrimaryContainerHeight();; i = 0)
             return i;
+    }*/
+    protected int getSplitActionBarHeight() {
+        int height = 0;
+        ActionBarView actionBarView = getActionBarView();
+        if (actionBarView.isSplitActionBar()) {
+            ActionMenuView actionMenuView = actionBarView.getActionMenuView();
+            if (actionMenuView.getMenuItems() > 0)
+                height = actionMenuView.getPrimaryContainerHeight();
+            else
+                height = 0;
+        }
+        return height;
     }
 
-    public void initForMode(ActionMode paramActionMode) {
+    @Override
+    public void initForMode(ActionMode actionMode) {
     }
 
     protected boolean isFragmentViewPagerMode() {
@@ -247,9 +371,9 @@ public class SearchActionModeView extends FrameLayout implements Animator.Animat
 
     public void killMode() {
         finishAnimation();
-        ViewGroup localViewGroup = (ViewGroup) getParent();
-        if (localViewGroup != null)
-            localViewGroup.removeView(this);
+        ViewGroup parent = (ViewGroup) getParent();
+        if (parent != null)
+            parent.removeView(this);
         this.mActionBarContainer = null;
         this.mActionBarView = null;
         if (this.mSearchModeAnimationListeners != null) {
@@ -259,7 +383,7 @@ public class SearchActionModeView extends FrameLayout implements Animator.Animat
         this.mSplitActionBarContainer = null;
     }
 
-    protected ObjectAnimator makeAnimation(int paramInt) {
+    /*protected ObjectAnimator makeAnimation(int paramInt) {
         if (this.mCurrentAnimation != null) {
             this.mCurrentAnimation.cancel();
             this.mCurrentAnimation = null;
@@ -283,13 +407,41 @@ public class SearchActionModeView extends FrameLayout implements Animator.Animat
             i = 1;
             break;
         }
+    }*/
+    protected ObjectAnimator makeAnimation(int visibility) {
+        if (mCurrentAnimation != null) {
+            mCurrentAnimation.cancel();
+            mCurrentAnimation = null;
+            removeIdleHandler();
+        }
+        int j;
+        int k;
+        float af[];
+        ObjectAnimator animator;
+        if (visibility == 0)
+            j = 0;
+        else
+            j = 1;
+        if (visibility == 0)
+            k = 1;
+        else
+            k = 0;
+        af = new float[2];
+        af[0] = j;
+        af[1] = k;
+        animator = ObjectAnimator.ofFloat(this, "Value", af);
+        animator.addListener(this);
+        animator.setDuration(200L);
+        return animator;
     }
 
-    public void onAnimationCancel(Animator paramAnimator) {
+    @Override
+    public void onAnimationCancel(Animator animation) {
     }
 
-    public void onAnimationEnd(Animator paramAnimator) {
-        this.mCurrentAnimation = null;
+    @Override
+    public void onAnimationEnd(Animator animation) {
+        /*this.mCurrentAnimation = null;
         notifyAnimationEnd();
         if (this.mAnimationMode == 1)
             ;
@@ -305,13 +457,29 @@ public class SearchActionModeView extends FrameLayout implements Animator.Animat
                 killMode();
             }
             return;
+        }*/
+        mCurrentAnimation = null;
+        notifyAnimationEnd();
+        boolean enter;
+        if (mAnimationMode == 1)
+            enter = true;
+        else
+            enter = false;
+        showSoftInputPanel(enter);
+        setResultViewMargin(enter);
+        if (mAnimationMode == 2) {
+            allowUpdateContentBorder(true);
+            setAlpha(0.0F);
+            mAnimateVisibility = 8;
+            if (isFragmentViewPagerMode()) {
+                getRootView().findViewById(R.id.content/* 0x1020002 */
+                ).requestLayout();
+            }
+            killMode();
         }
     }
 
-    public void onAnimationRepeat(Animator paramAnimator) {
-    }
-
-    public void onAnimationStart(Animator paramAnimator) {
+    /*public void onAnimationStart(Animator paramAnimator) {
         if (this.mAnimationMode == 1) {
             if (this.mAnchorView != null)
                 ((View) this.mAnchorView.get()).setAlpha(0.0F);
@@ -326,34 +494,48 @@ public class SearchActionModeView extends FrameLayout implements Animator.Animat
                     localView.setVisibility(0);
             }
         }
+    }*/
+    @Override
+    public void onAnimationStart(Animator animation) {
+        if (mAnimationMode != 1) {
+            if (mAnimationMode == 2) {
+                View tabScrollView = getActionBarContainer().getTabContainer();
+                if (tabScrollView != null)
+                    tabScrollView.setVisibility(0);
+            }
+            return;
+        } else {
+            if (mAnchorView != null)
+                ((View) mAnchorView.get()).setAlpha(0.0F);
+            setAlpha(1.0F);
+            mAnimateVisibility = 0;
+        }
     }
 
-    public void onClick(View paramView) {
-        if (paramView.getId() == 101384354)
-            this.mBackView.performClick();
+    @Override
+    public void onClick(View v) {
+        if (v.getId() == com.miui.internal.R.id.v5_icon_menu_bar_dim_container/* 0x60b00a2 */)
+            mBackView.performClick();
     }
 
     protected void onFinishInflate() {
         super.onFinishInflate();
-        this.mBackView = ((ImageView) findViewById(16908332));
-        this.mInputView = ((EditText) findViewById(16908297));
-        ((ViewGroup.MarginLayoutParams) this.mBackView.getLayoutParams()).leftMargin = (-getPaddingLeft());
+        mBackView = (ImageView) findViewById(R.id.home/* 0x102002c */);
+        mInputView = (EditText) findViewById(R.id.input/* 0x1020009 */);
+        ((MarginLayoutParams) mBackView.getLayoutParams()).leftMargin = -getPaddingLeft();
     }
 
-    protected void onLayout(boolean paramBoolean, int paramInt1, int paramInt2, int paramInt3,
-            int paramInt4) {
-        super.onLayout(paramBoolean, paramInt1, paramInt2, paramInt3, paramInt4);
-        if (this.mRequestAnimation) {
-            if ((this.mAnimationMode == 1) && (hasAnchorAndAnimateView()))
-                ((View) this.mAnimateView.get())
-                        .setTranslationY(-this.mAnimateViewTranslationYLength);
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        super.onLayout(changed, left, top, right, bottom);
+        if (mRequestAnimation) {
+            if ((mAnimationMode == 1) && (hasAnchorAndAnimateView()))
+                ((View) mAnimateView.get()).setTranslationY(-mAnimateViewTranslationYLength);
             queueIdleHandler();
-            this.mRequestAnimation = false;
+            mRequestAnimation = false;
         }
     }
 
-    public void onTextChanged(CharSequence paramCharSequence, int paramInt1, int paramInt2,
-            int paramInt3) {
+    public void onTextChanged(CharSequence s, int start, int before, int count) {
     }
 
     protected void pollViews() {
@@ -363,62 +545,56 @@ public class SearchActionModeView extends FrameLayout implements Animator.Animat
     }
 
     public boolean queueIdle() {
-        this.mCurrentAnimation.start();
+        mCurrentAnimation.start();
         return false;
     }
 
-    public void removeAnimationListener(SearchModeAnimationListener paramSearchModeAnimationListener) {
-        if (paramSearchModeAnimationListener == null)
-            ;
-        while (true) {
-            return;
-            if (this.mSearchModeAnimationListeners != null)
-                this.mSearchModeAnimationListeners.remove(paramSearchModeAnimationListener);
+    public void removeAnimationListener(SearchModeAnimationListener listener) {
+        if (listener != null && mSearchModeAnimationListeners != null)
+            mSearchModeAnimationListeners.remove(listener);
+    }
+
+    public void setAnchorView(View view) {
+        if (view != null)
+            this.mAnchorView = new WeakReference(view);
+    }
+
+    public void setAnchorViewHint(CharSequence hint) {
+        this.mInputView.setHint(hint);
+    }
+
+    public void setAnimateView(View view) {
+        if (view != null)
+            this.mAnimateView = new WeakReference(view);
+    }
+
+    protected void setContentViewMargin(int topMargin, int bottomMargin) {
+        View view = getRootView().findViewById(R.id.content/* 0x1020002 */);
+        if (view != null) {
+            MarginLayoutParams lParams = (MarginLayoutParams) view.getLayoutParams();
+            lParams.bottomMargin = bottomMargin;
+            lParams.topMargin = topMargin;
+            view.setLayoutParams(lParams);
         }
     }
 
-    public void setAnchorView(View paramView) {
-        if (paramView != null)
-            this.mAnchorView = new WeakReference(paramView);
+    public void setOnBackClickListener(View.OnClickListener listener) {
+        this.mBackView.setOnClickListener(listener);
     }
 
-    public void setAnchorViewHint(CharSequence paramCharSequence) {
-        this.mInputView.setHint(paramCharSequence);
-    }
-
-    public void setAnimateView(View paramView) {
-        if (paramView != null)
-            this.mAnimateView = new WeakReference(paramView);
-    }
-
-    protected void setContentViewMargin(int paramInt1, int paramInt2) {
-        View localView = getRootView().findViewById(16908290);
-        if (localView != null) {
-            ViewGroup.MarginLayoutParams localMarginLayoutParams = (ViewGroup.MarginLayoutParams) localView
-                    .getLayoutParams();
-            localMarginLayoutParams.bottomMargin = paramInt2;
-            localMarginLayoutParams.topMargin = paramInt1;
-            localView.setLayoutParams(localMarginLayoutParams);
-        }
-    }
-
-    public void setOnBackClickListener(View.OnClickListener paramOnClickListener) {
-        this.mBackView.setOnClickListener(paramOnClickListener);
-    }
-
-    public void setResultView(View paramView) {
-        if (paramView != null) {
-            this.mResusltView = new WeakReference(paramView);
-            ViewGroup.LayoutParams localLayoutParams = paramView.getLayoutParams();
-            if ((localLayoutParams instanceof ViewGroup.MarginLayoutParams)) {
-                this.mResultViewOriginMarginTop = ((ViewGroup.MarginLayoutParams) localLayoutParams).topMargin;
-                this.mResultViewOriginMarginBottom = ((ViewGroup.MarginLayoutParams) localLayoutParams).bottomMargin;
+    public void setResultView(View view) {
+        if (view != null) {
+            this.mResusltView = new WeakReference(view);
+            ViewGroup.LayoutParams lParams = view.getLayoutParams();
+            if ((lParams instanceof ViewGroup.MarginLayoutParams)) {
+                this.mResultViewOriginMarginTop = ((ViewGroup.MarginLayoutParams) lParams).topMargin;
+                this.mResultViewOriginMarginBottom = ((ViewGroup.MarginLayoutParams) lParams).bottomMargin;
                 this.mResultViewSet = true;
             }
         }
     }
 
-    protected void setResultViewMargin(boolean paramBoolean) {
+    /*protected void setResultViewMargin(boolean paramBoolean) {
         int i;
         int j;
         if ((this.mResusltView != null) && (this.mResultViewSet)) {
@@ -440,13 +616,33 @@ public class SearchActionModeView extends FrameLayout implements Animator.Animat
             label71: i = this.mResultViewOriginMarginTop;
             j = this.mResultViewOriginMarginBottom;
         }
+    }*/
+    protected void setResultViewMargin(boolean enter) {
+        if (mResusltView != null && mResultViewSet) {
+            int topMargin;
+            int bottomMargin;
+            ViewGroup.MarginLayoutParams lParams;
+            if (enter) {
+                topMargin = getHeight();
+                if (isFragmentViewPagerMode())
+                    bottomMargin = getSplitActionBarHeight();
+                else
+                    bottomMargin = 0;
+            } else {
+                topMargin = mResultViewOriginMarginTop;
+                bottomMargin = mResultViewOriginMarginBottom;
+            }
+            lParams = (MarginLayoutParams) ((View) mResusltView.get()).getLayoutParams();
+            lParams.topMargin = topMargin;
+            lParams.bottomMargin = bottomMargin;
+        }
     }
 
-    public void setValue(float paramFloat) {
-        notifyAnimation(paramFloat);
+    public void setValue(float percent) {
+        notifyAnimation(percent);
     }
 
-    protected void showSoftInputPanel(boolean paramBoolean) {
+    /*protected void showSoftInputPanel(boolean paramBoolean) {
         InputMethodManager localInputMethodManager = InputMethodManager.peekInstance();
         if (paramBoolean) {
             localInputMethodManager.viewClicked(this.mInputView);
@@ -456,6 +652,15 @@ public class SearchActionModeView extends FrameLayout implements Animator.Animat
             return;
             localInputMethodManager.hideSoftInputFromWindow(getWindowToken(), 0);
         }
+    }*/
+    protected void showSoftInputPanel(boolean show) {
+        InputMethodManager imm = InputMethodManager.peekInstance();
+        if (show) {
+            imm.viewClicked(mInputView);
+            imm.showSoftInput(mInputView, 0);
+        } else {
+            imm.hideSoftInputFromWindow(getWindowToken(), 0);
+        }
     }
 
     class ActionBarSearchModeAnimationListener extends SimpleSearchModeAnimationListener {
@@ -464,19 +669,18 @@ public class SearchActionModeView extends FrameLayout implements Animator.Animat
 
         public void onStop() {
             if (SearchActionModeView.this.mAnimationMode == 1) {
-                View localView = SearchActionModeView.this.getActionBarContainer()
+                View tabScrollView = SearchActionModeView.this.getActionBarContainer()
                         .getTabContainer();
-                if (localView != null)
-                    localView.setVisibility(8);
+                if (tabScrollView != null)
+                    tabScrollView.setVisibility(8);
             }
         }
 
-        public void onUpdate(float paramFloat) {
-            ActionBarContainer localActionBarContainer = SearchActionModeView.this
+        public void onUpdate(float percent) {
+            ActionBarContainer actionBarContainer = SearchActionModeView.this
                     .getActionBarContainer();
-            if (localActionBarContainer != null)
-                localActionBarContainer.setTranslationY(-paramFloat
-                        * localActionBarContainer.getHeight());
+            if (actionBarContainer != null)
+                actionBarContainer.setTranslationY(-percent * actionBarContainer.getHeight());
         }
     }
 
@@ -484,7 +688,7 @@ public class SearchActionModeView extends FrameLayout implements Animator.Animat
         ContentViewSearchModeAnimationListener() {
         }
 
-        public void onStart() {
+        /*public void onStart() {
             int j;
             if (SearchActionModeView.this.mAnimationMode == 1) {
                 SearchActionModeView.this.getActionBarContainer().getLocationInWindow(
@@ -514,6 +718,27 @@ public class SearchActionModeView extends FrameLayout implements Animator.Animat
                     SearchActionModeView.this.setContentViewMargin(0,
                             -SearchActionModeView.this.mAnimateViewTranslationYLength);
             }
+        }*/
+        public void onStart() {
+            if (mAnimationMode != 1) {
+                if (mAnimationMode == 2 && isFragmentViewPagerMode())
+                    setContentViewMargin(0, -mAnimateViewTranslationYLength);
+                return;
+            } else {
+                getActionBarContainer().getLocationInWindow(mLocation);
+                int actionBarLocation = mLocation[1];
+                ((View) mAnchorView.get()).getLocationInWindow(mLocation);
+                mAnimateViewTranslationYStart = mLocation[1] - actionBarLocation;
+                mAnimateViewTranslationYLength = -mAnimateViewTranslationYStart;
+                mInputViewTranslationYStart = mLocation[1];
+                mInputViewTranslationYLength = mAnimateViewTranslationYLength;
+                int bottomMargin;
+                if (isFragmentViewPagerMode())
+                    bottomMargin = -getSplitActionBarHeight();
+                else
+                    bottomMargin = 0;
+                setContentViewMargin(0, bottomMargin);
+            }
         }
 
         public void onStop() {
@@ -524,13 +749,13 @@ public class SearchActionModeView extends FrameLayout implements Animator.Animat
             }
         }
 
-        public void onUpdate(float paramFloat) {
-            float f = SearchActionModeView.this.mAnimateViewTranslationYStart + paramFloat
+        public void onUpdate(float percent) {
+            float translationY = SearchActionModeView.this.mAnimateViewTranslationYStart + percent
                     * SearchActionModeView.this.mAnimateViewTranslationYLength;
-            ((View) SearchActionModeView.this.mAnimateView.get()).setTranslationY(f);
+            ((View) SearchActionModeView.this.mAnimateView.get()).setTranslationY(translationY);
             SearchActionModeView.this
                     .setTranslationY(SearchActionModeView.this.mInputViewTranslationYStart
-                            + paramFloat * SearchActionModeView.this.mInputViewTranslationYLength);
+                            + percent * SearchActionModeView.this.mInputViewTranslationYLength);
         }
     }
 
@@ -540,15 +765,16 @@ public class SearchActionModeView extends FrameLayout implements Animator.Animat
 
         public void onStart() {
             if (SearchActionModeView.this.mAnimationMode == 1) {
-                SearchActionModeView.access$1302(SearchActionModeView.this,
-                        SearchActionModeView.this.getRootView().findViewById(101384354));
+                //SearchActionModeView.access$1302(SearchActionModeView.this,
+                //        SearchActionModeView.this.getRootView().findViewById(0x60b00a2));
+                mDimView = getRootView().findViewById(com.miui.internal.R.id.v5_icon_menu_bar_dim_container);
                 SearchActionModeView.this.mDimView.setOnClickListener(SearchActionModeView.this);
                 SearchActionModeView.this.mDimView.setVisibility(0);
                 SearchActionModeView.this.mDimView.setAlpha(0.0F);
             }
         }
 
-        public void onStop() {
+        /*public void onStop() {
             if (SearchActionModeView.this.mAnimationMode == 1)
                 if (SearchActionModeView.this.mInputView.getText().length() > 0)
                     SearchActionModeView.this.mDimView.setVisibility(8);
@@ -559,10 +785,22 @@ public class SearchActionModeView extends FrameLayout implements Animator.Animat
                     SearchActionModeView.this.mDimView.setAlpha(1.0F);
                 }
             }
+        }*/
+        public void onStop() {
+            if (mAnimationMode != 1) {
+                if (mAnimationMode == 2) {
+                    mDimView.setVisibility(8);
+                    mDimView.setAlpha(1.0F);
+                }
+                return;
+            } else {
+                if (mInputView.getText().length() > 0)
+                    mDimView.setVisibility(8);
+            }
         }
 
-        public void onUpdate(float paramFloat) {
-            SearchActionModeView.this.mDimView.setAlpha(paramFloat);
+        public void onUpdate(float percent) {
+            SearchActionModeView.this.mDimView.setAlpha(percent);
         }
     }
 
@@ -627,5 +865,11 @@ public class SearchActionModeView extends FrameLayout implements Animator.Animat
                 localActionBarContainer.setTranslationY(paramFloat
                         * localActionBarContainer.getHeight());
         }
+    }
+
+    @Override
+    public void onAnimationRepeat(Animator arg0) {
+        // TODO Auto-generated method stub
+        
     }
 }
