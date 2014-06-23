@@ -10,8 +10,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.magicmod.mport.v5.android.support.view.PagerAdapter;
-import com.magicmod.mport.v5.android.support.view.ViewPager;
+import com.magicmod.mport.v5.view.PagerAdapter;
+import com.magicmod.mport.v5.view.ViewPager;
 
 import java.util.ArrayList;
 
@@ -23,77 +23,83 @@ class DynamicFragmentPagerAdapter extends PagerAdapter {
     private FragmentManager mFragmentManager;
     private ViewPager mViewPager;
 
-    public DynamicFragmentPagerAdapter(Context paramContext, FragmentManager paramFragmentManager,
-            ViewPager paramViewPager) {
-        this.mContext = paramContext;
-        this.mFragmentManager = paramFragmentManager;
-        this.mViewPager = paramViewPager;
+    public DynamicFragmentPagerAdapter(Context context, FragmentManager fm,
+            ViewPager viewPager) {
+        this.mContext = context;
+        this.mFragmentManager = fm;
+        this.mViewPager = viewPager;
         this.mViewPager.setAdapter(this);
     }
 
     private void removeAllFragmentFromManager() {
-        FragmentTransaction localFragmentTransaction = this.mFragmentManager.beginTransaction();
-        int i = this.mFragmentInfos.size();
-        for (int j = 0; j < i; j++)
-            localFragmentTransaction.remove(getFragment(j, false));
-        localFragmentTransaction.commitAllowingStateLoss();
-        this.mFragmentManager.executePendingTransactions();
+        FragmentTransaction ft = this.mFragmentManager.beginTransaction();
+        int size = mFragmentInfos.size();
+        for (int i = 0; i < size; i++) {
+            ft.remove(getFragment(i, false));
+        }
+        ft.commitAllowingStateLoss();
+        mFragmentManager.executePendingTransactions();
     }
 
-    private void removeFragmentFromManager(Fragment paramFragment) {
-        if (paramFragment != null) {
-            FragmentManager localFragmentManager = paramFragment.getFragmentManager();
-            if (localFragmentManager != null) {
-                FragmentTransaction localFragmentTransaction = localFragmentManager
-                        .beginTransaction();
-                localFragmentTransaction.remove(paramFragment);
-                localFragmentTransaction.commitAllowingStateLoss();
-                localFragmentManager.executePendingTransactions();
+    private void removeFragmentFromManager(Fragment fragment) {
+        if (fragment != null) {
+            FragmentManager fm = fragment.getFragmentManager();
+            if (fm != null) {
+                FragmentTransaction ft = fm.beginTransaction();
+                ft.remove(fragment);
+                ft.commitAllowingStateLoss();
+                fm.executePendingTransactions();
             }
         }
     }
 
-    int addFragment(String paramString, int paramInt, Class<? extends Fragment> paramClass,
-            Bundle paramBundle, ActionBar.Tab paramTab, boolean paramBoolean) {
-        this.mFragmentInfos.add(paramInt, new FragmentInfo(paramString, paramClass, paramBundle,
-                paramTab, paramBoolean));
+    int addFragment(String tag, int index, Class<? extends Fragment> clazz, Bundle args,
+            ActionBar.Tab tab, boolean hasActionMenu) {
+        mFragmentInfos.add(index, new FragmentInfo(tag, clazz, args, tab, hasActionMenu));
         notifyDataSetChanged();
-        return paramInt;
+        return index;
     }
 
-    int addFragment(String paramString, Class<? extends Fragment> paramClass, Bundle paramBundle,
-            ActionBar.Tab paramTab, boolean paramBoolean) {
-        this.mFragmentInfos.add(new FragmentInfo(paramString, paramClass, paramBundle, paramTab,
-                paramBoolean));
+    int addFragment(String tag, Class<? extends Fragment> clazz, Bundle args, ActionBar.Tab tab,
+            boolean hasActionMenu) {
+        mFragmentInfos.add(new FragmentInfo(tag, clazz, args, tab, hasActionMenu));
         notifyDataSetChanged();
-        return -1 + this.mFragmentInfos.size();
+        return mFragmentInfos.size() - 1;
     }
 
-    public void destroyItem(ViewGroup paramViewGroup, int paramInt, Object paramObject) {
-        if (this.mCurTransaction == null)
-            this.mCurTransaction = this.mFragmentManager.beginTransaction();
-        this.mCurTransaction.detach((Fragment) paramObject);
+    public void destroyItem(ViewGroup container, int position, Object object) {
+        if (mCurTransaction == null)
+            mCurTransaction = mFragmentManager.beginTransaction();
+        mCurTransaction.detach((Fragment) object);
     }
 
-    int findPositionByTag(String paramString) {
-        int i = this.mFragmentInfos.size();
+    int findPositionByTag(String tag) {
+        /*int i = this.mFragmentInfos.size();
         int j = 0;
         if (j < i)
-            if (!((FragmentInfo) this.mFragmentInfos.get(j)).tag.equals(paramString))
+            if (!((FragmentInfo) this.mFragmentInfos.get(j)).tag.equals(tag))
                 ;
         while (true) {
             return j;
             j++;
             break;
             j = -1;
+        }*/
+        int size = mFragmentInfos.size(); //v2
+        for (int i=0; i<size; i++) {
+            FragmentInfo fi = (FragmentInfo)mFragmentInfos.get(i);
+            if (fi.tag.equals(tag)) {
+                return i;
+            }
         }
+        return -1;
     }
 
-    public void finishUpdate(ViewGroup paramViewGroup) {
-        if (this.mCurTransaction != null) {
-            this.mCurTransaction.commitAllowingStateLoss();
-            this.mCurTransaction = null;
-            this.mFragmentManager.executePendingTransactions();
+    public void finishUpdate(ViewGroup container) {
+        if (mCurTransaction != null) {
+            mCurTransaction.commitAllowingStateLoss();
+            mCurTransaction = null;
+            mFragmentManager.executePendingTransactions();
         }
     }
 
@@ -101,23 +107,21 @@ class DynamicFragmentPagerAdapter extends PagerAdapter {
         return this.mFragmentInfos.size();
     }
 
-    Fragment getFragment(int paramInt, boolean paramBoolean) {
-        FragmentInfo localFragmentInfo = (FragmentInfo) this.mFragmentInfos.get(paramInt);
-        if (localFragmentInfo.fragment == null) {
-            localFragmentInfo.fragment = this.mFragmentManager
-                    .findFragmentByTag(localFragmentInfo.tag);
-            if ((localFragmentInfo.fragment == null) && (paramBoolean)) {
-                localFragmentInfo.fragment = Fragment.instantiate(this.mContext,
-                        localFragmentInfo.clazz.getName(), localFragmentInfo.args);
-                localFragmentInfo.clazz = null;
-                localFragmentInfo.args = null;
+    Fragment getFragment(int position, boolean create) {
+        FragmentInfo fi = (FragmentInfo) mFragmentInfos.get(position);
+        if (fi.fragment == null) {
+            fi.fragment = mFragmentManager.findFragmentByTag(fi.tag);
+            if ((fi.fragment == null) && (create)) {
+                fi.fragment = Fragment.instantiate(mContext, fi.clazz.getName(), fi.args);
+                fi.clazz = null;
+                fi.args = null;
             }
         }
-        return localFragmentInfo.fragment;
+        return fi.fragment;
     }
 
-    public int getItemPosition(Object paramObject) {
-        int i = this.mFragmentInfos.size();
+    public int getItemPosition(Object object) {
+        /*int i = this.mFragmentInfos.size();
         int j = 0;
         if (j < i)
             if (paramObject != ((FragmentInfo) this.mFragmentInfos.get(j)).fragment)
@@ -127,18 +131,26 @@ class DynamicFragmentPagerAdapter extends PagerAdapter {
             j++;
             break;
             j = -2;
+        }*/
+        int size = mFragmentInfos.size(); //v1
+        //int i = 0; //v0
+        for (int i=0; i<size; i++) {
+            if (((FragmentInfo)mFragmentInfos.get(i)).fragment == object) {
+                return i;
+            }
         }
+        return -2;
     }
 
-    ActionBar.Tab getTabAt(int paramInt) {
-        return ((FragmentInfo) this.mFragmentInfos.get(paramInt)).tab;
+    ActionBar.Tab getTabAt(int position) {
+        return ((FragmentInfo) mFragmentInfos.get(position)).tab;
     }
 
-    public boolean hasActionMenu(int paramInt) {
-        return ((FragmentInfo) this.mFragmentInfos.get(paramInt)).hasActionMenu;
+    public boolean hasActionMenu(int position) {
+        return ((FragmentInfo) mFragmentInfos.get(position)).hasActionMenu;
     }
 
-    public Object instantiateItem(ViewGroup paramViewGroup, int paramInt) {
+    /*public Object instantiateItem(ViewGroup paramViewGroup, int paramInt) {
         if (this.mCurTransaction == null)
             this.mCurTransaction = this.mFragmentManager.beginTransaction();
         Fragment localFragment = getFragment(paramInt, true);
@@ -153,23 +165,42 @@ class DynamicFragmentPagerAdapter extends PagerAdapter {
             this.mCurTransaction.add(paramViewGroup.getId(), localFragment,
                     ((FragmentInfo) this.mFragmentInfos.get(paramInt)).tag);
         }
+    }*/
+    public Object instantiateItem(ViewGroup container, int position) {
+        if (mCurTransaction == null)
+            mCurTransaction = mFragmentManager.beginTransaction();
+        Fragment fragment = getFragment(position, true);
+        if (fragment.getFragmentManager() != null) {
+            mCurTransaction.attach(fragment);
+        } else {
+            mCurTransaction.add(container.getId(), fragment,
+                    ((FragmentInfo) mFragmentInfos.get(position)).tag);
+        }
+        if (fragment != mCurrentPrimaryItem) {
+            fragment.setMenuVisibility(false);
+            fragment.setUserVisibleHint(false);
+        }
+        return fragment;
     }
 
-    public boolean isViewFromObject(View paramView, Object paramObject) {
-        if (((Fragment) paramObject).getView() == paramView)
-            ;
-        for (boolean bool = true;; bool = false)
-            return bool;
+    @Override
+    public boolean isViewFromObject(View view, Object object) {
+        boolean flag;
+        if (((Fragment) object).getView() == view)
+            flag = true;
+        else
+            flag = false;
+        return flag;
     }
 
     void removeAllFragment() {
         removeAllFragmentFromManager();
-        this.mFragmentInfos.clear();
+        mFragmentInfos.clear();
         notifyDataSetChanged();
     }
 
-    int removeFragment(ActionBar.Tab paramTab) {
-        int i = this.mFragmentInfos.size();
+    int removeFragment(ActionBar.Tab tab) {
+        /*int i = this.mFragmentInfos.size();
         int j = 0;
         if (j < i) {
             FragmentInfo localFragmentInfo = (FragmentInfo) this.mFragmentInfos.get(j);
@@ -184,15 +215,26 @@ class DynamicFragmentPagerAdapter extends PagerAdapter {
             j++;
             break;
             j = -1;
+        }*/
+        int size = mFragmentInfos.size(); // v2
+        for (int i = 0; i < size; i++) {
+            FragmentInfo fi = (FragmentInfo) mFragmentInfos.get(i); // local v0
+            if (fi.tab == tab) { // cond_0 in
+                removeFragmentFromManager(fi.fragment);
+                mFragmentInfos.remove(i);
+                notifyDataSetChanged();
+                return i;
+            }
         }
+        return -1;
     }
 
-    int removeFragment(Fragment paramFragment) {
-        int i = this.mFragmentInfos.size();
+    int removeFragment(Fragment fragment) {
+        /*int i = this.mFragmentInfos.size();
         int j = 0;
         if (j < i)
-            if (getFragment(j, false) == paramFragment) {
-                removeFragmentFromManager(paramFragment);
+            if (getFragment(j, false) == fragment) {
+                removeFragmentFromManager(fragment);
                 this.mFragmentInfos.remove(j);
                 notifyDataSetChanged();
             }
@@ -201,39 +243,49 @@ class DynamicFragmentPagerAdapter extends PagerAdapter {
             j++;
             break;
             j = -1;
+        }*/
+        int size = mFragmentInfos.size();
+        for (int i = 0; i < size; i++) {
+            if (getFragment(i, false) == fragment) {
+                removeFragmentFromManager(fragment);
+                mFragmentInfos.remove(i);
+                notifyDataSetChanged();
+                return i;
+            }
         }
+        return -1;
     }
 
-    void removeFragmentAt(int paramInt) {
-        removeFragmentFromManager(getFragment(paramInt, false));
-        this.mFragmentInfos.remove(paramInt);
+    void removeFragmentAt(int position) {
+        removeFragmentFromManager(getFragment(position, false));
+        mFragmentInfos.remove(position);
         notifyDataSetChanged();
     }
 
-    void setFragmentActionMenuAt(int paramInt, boolean paramBoolean) {
-        FragmentInfo localFragmentInfo = (FragmentInfo) this.mFragmentInfos.get(paramInt);
-        if (localFragmentInfo.hasActionMenu != paramBoolean) {
-            localFragmentInfo.hasActionMenu = paramBoolean;
+    void setFragmentActionMenuAt(int position, boolean hasActionMenu) {
+        FragmentInfo fi = (FragmentInfo) mFragmentInfos.get(position);
+        if (fi.hasActionMenu != hasActionMenu) {
+            fi.hasActionMenu = hasActionMenu;
             notifyDataSetChanged();
         }
     }
 
-    public void setPrimaryItem(ViewGroup paramViewGroup, int paramInt, Object paramObject) {
-        Fragment localFragment = (Fragment) paramObject;
-        if (localFragment != this.mCurrentPrimaryItem) {
-            if (this.mCurrentPrimaryItem != null) {
-                this.mCurrentPrimaryItem.setMenuVisibility(false);
-                this.mCurrentPrimaryItem.setUserVisibleHint(false);
+    public void setPrimaryItem(ViewGroup container, int position, Object object) {
+        Fragment fragment = (Fragment) object;
+        if (fragment != mCurrentPrimaryItem) {
+            if (mCurrentPrimaryItem != null) {
+                mCurrentPrimaryItem.setMenuVisibility(false);
+                mCurrentPrimaryItem.setUserVisibleHint(false);
             }
-            if (localFragment != null) {
-                localFragment.setMenuVisibility(true);
-                localFragment.setUserVisibleHint(true);
+            if (fragment != null) {
+                fragment.setMenuVisibility(true);
+                fragment.setUserVisibleHint(true);
             }
-            this.mCurrentPrimaryItem = localFragment;
+            mCurrentPrimaryItem = fragment;
         }
     }
 
-    public void startUpdate(ViewGroup paramViewGroup) {
+    public void startUpdate(ViewGroup container) {
     }
 
     class FragmentInfo {
@@ -244,22 +296,16 @@ class DynamicFragmentPagerAdapter extends PagerAdapter {
         ActionBar.Tab tab;
         String tag;
 
-        FragmentInfo(Class<? extends Fragment> paramBundle, Bundle paramTab,
-                ActionBar.Tab paramBoolean, boolean arg5) {
-            this.tag = paramBundle;
-            this.clazz = paramTab;
+        FragmentInfo(String tag, Class<? extends Fragment> clazz, Bundle args, ActionBar.Tab tab,
+                boolean hasActionMenu) {
+            this.tag = tag;
+            this.clazz = clazz;
             this.fragment = null;
-            this.args = paramBoolean;
-            Object localObject;
-            this.tab = localObject;
-            boolean bool;
-            this.hasActionMenu = bool;
+            this.args = args;
+            // Object localObject;
+            this.tab = tab;
+            // boolean bool;
+            this.hasActionMenu = hasActionMenu;
         }
-    }
-
-    @Override
-    public boolean isViewFromObject(View view, Object object) {
-        // TODO Auto-generated method stub
-        return false;
     }
 }

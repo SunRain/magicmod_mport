@@ -1,6 +1,9 @@
 
 package com.magicmod.mport.internal.v5.app;
 
+import android.animation.Animator;
+import android.animation.Animator.AnimatorListener;
+import android.animation.ObjectAnimator;
 import android.app.ActionBar;
 import android.app.ActionBar.LayoutParams;
 import android.app.ActionBar.OnMenuVisibilityListener;
@@ -15,6 +18,7 @@ import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.ActionMode;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -22,49 +26,52 @@ import android.widget.SpinnerAdapter;
 
 import com.android.internal.telephony.CallerInfo;
 import com.magicmod.mport.internal.v5.view.ActionModeView;
+import com.magicmod.mport.internal.v5.widget.ActionBarContainer;
+import com.magicmod.mport.internal.v5.widget.ActionBarOverlayLayout;
 import com.magicmod.mport.internal.v5.widget.ActionBarView;
+import com.magicmod.mport.internal.v5.widget.ScrollingTabContainerView;
 import com.magicmod.mport.internal.v5.widget.SearchActionModeView;
 import com.magicmod.mport.v5.app.MiuiActionBar;
 import com.magicmod.mport.v5.view.DefaultActionMode;
 import com.magicmod.mport.v5.view.DefaultActionMode.ActionModeCallback;
+import com.magicmod.mport.v5.view.EditActionMode;
+import com.magicmod.mport.v5.view.SearchActionMode;
+import com.miui.internal.R;
 
 public class ActionBarImpl extends com.android.internal.app.ActionBarImpl implements MiuiActionBar,
         ActionModeCallback {
-    private static final int CONTEXT_DISPLAY_SPLIT = 1;
+    private static final int CONTEXT_DISPLAY_SPLIT = 0x1;
+    
     static final ActionBar.TabListener sLisenter = new ActionBar.TabListener() {
-        public void onTabReselected(ActionBar.Tab paramAnonymousTab,
-                FragmentTransaction paramAnonymousFragmentTransaction) {
-            ActionBarImpl.TabImpl localTabImpl = (ActionBarImpl.TabImpl) paramAnonymousTab;
-            if (localTabImpl.mSystemLisenter != null)
-                localTabImpl.mSystemLisenter.onTabReselected(paramAnonymousTab,
-                        paramAnonymousFragmentTransaction);
-            if (localTabImpl.mUserLisenter != null)
-                localTabImpl.mUserLisenter.onTabReselected(paramAnonymousTab,
-                        paramAnonymousFragmentTransaction);
+
+        @Override
+        public void onTabReselected(ActionBar.Tab tab, FragmentTransaction ft) {
+            ActionBarImpl.TabImpl impl = (ActionBarImpl.TabImpl) tab;
+            if (impl.mSystemLisenter != null)
+                impl.mSystemLisenter.onTabReselected(tab, ft);
+            if (impl.mUserLisenter != null)
+                impl.mUserLisenter.onTabReselected(tab, ft);
         }
 
-        public void onTabSelected(ActionBar.Tab paramAnonymousTab,
-                FragmentTransaction paramAnonymousFragmentTransaction) {
-            ActionBarImpl.TabImpl localTabImpl = (ActionBarImpl.TabImpl) paramAnonymousTab;
-            if (localTabImpl.mSystemLisenter != null)
-                localTabImpl.mSystemLisenter.onTabSelected(paramAnonymousTab,
-                        paramAnonymousFragmentTransaction);
-            if (localTabImpl.mUserLisenter != null)
-                localTabImpl.mUserLisenter.onTabSelected(paramAnonymousTab,
-                        paramAnonymousFragmentTransaction);
+        @Override
+        public void onTabSelected(ActionBar.Tab tab, FragmentTransaction ft) {
+            ActionBarImpl.TabImpl impl = (ActionBarImpl.TabImpl) tab;
+            if (impl.mSystemLisenter != null)
+                impl.mSystemLisenter.onTabSelected(tab, ft);
+            if (impl.mUserLisenter != null)
+                impl.mUserLisenter.onTabSelected(tab, ft);
         }
 
-        public void onTabUnselected(ActionBar.Tab paramAnonymousTab,
-                FragmentTransaction paramAnonymousFragmentTransaction) {
-            ActionBarImpl.TabImpl localTabImpl = (ActionBarImpl.TabImpl) paramAnonymousTab;
-            if (localTabImpl.mSystemLisenter != null)
-                localTabImpl.mSystemLisenter.onTabUnselected(paramAnonymousTab,
-                        paramAnonymousFragmentTransaction);
-            if (localTabImpl.mUserLisenter != null)
-                localTabImpl.mUserLisenter.onTabUnselected(paramAnonymousTab,
-                        paramAnonymousFragmentTransaction);
+        @Override
+        public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction ft) {
+            ActionBarImpl.TabImpl impl = (ActionBarImpl.TabImpl) tab;
+            if (impl.mSystemLisenter != null)
+                impl.mSystemLisenter.onTabUnselected(tab, ft);
+            if (impl.mUserLisenter != null)
+                impl.mUserLisenter.onTabUnselected(tab, ft);
         }
     };
+
     private DefaultActionMode mCurrentActionMode;
     private ActionModeView mCurrentActionModeView;
     private ViewGroup mDecor;
@@ -73,91 +80,103 @@ public class ActionBarImpl extends com.android.internal.app.ActionBarImpl implem
     private ViewPagerController mViewPagerController;
     private Window mWindow;
 
-    public ActionBarImpl(Activity paramActivity) {
-        super(paramActivity);
-        init(paramActivity.getWindow());
+    public ActionBarImpl(Activity activity) {
+        super(activity);
+        init(activity.getWindow());
     }
 
-    public ActionBarImpl(Dialog paramDialog) {
-        super(paramDialog);
-        init(paramDialog.getWindow());
+    public ActionBarImpl(Dialog dialog) {
+        super(dialog);
+        init(dialog.getWindow());
     }
 
-    public static ActionBarImpl getActionBarByView(View paramView) {
-        return ActionBarView.findActionBarViewByView(paramView).getActionBar();
+    public static ActionBarImpl getActionBarByView(View view) {
+        return ActionBarView.findActionBarViewByView(view).getActionBar();
     }
 
-    private void init(Window paramWindow) {
-        this.mWindow = paramWindow;
+    private void init(Window window) {
+        this.mWindow = window;
         this.mDecor = ((ViewGroup) this.mWindow.getDecorView());
-        this.mDimView = this.mDecor.findViewById(101384354);
-        ((com.miui.internal.v5.widget.ActionBarView) getActionView()).setActionBar(this);
+        this.mDimView = this.mDecor.findViewById(/*0x60b00a2*/R.id.v5_icon_menu_bar_dim_container);
+        ((ActionBarView) getActionView()).setActionBar(this);
     }
 
-    public int addFragmentTab(String paramString, ActionBar.Tab paramTab, int paramInt,
-            Class<? extends Fragment> paramClass, Bundle paramBundle, boolean paramBoolean) {
-        return this.mViewPagerController.addFragmentTab(paramString, paramTab, paramInt,
-                paramClass, paramBundle, paramBoolean);
+    @Override
+    public int addFragmentTab(String tag, ActionBar.Tab tab, int index,
+            Class<? extends Fragment> fragment, Bundle args, boolean hasActionMenu) {
+        return this.mViewPagerController.addFragmentTab(tag, tab, index, fragment, args,
+                hasActionMenu);
     }
 
-    public int addFragmentTab(String paramString, ActionBar.Tab paramTab,
-            Class<? extends Fragment> paramClass, Bundle paramBundle, boolean paramBoolean) {
-        return this.mViewPagerController.addFragmentTab(paramString, paramTab, paramClass,
-                paramBundle, paramBoolean);
+    @Override
+    public int addFragmentTab(String tag, ActionBar.Tab tab, Class<? extends Fragment> fragment,
+            Bundle args, boolean hasActionMenu) {
+        return this.mViewPagerController.addFragmentTab(tag, tab, fragment, args, hasActionMenu);
     }
 
     public void addOnFragmentViewPagerChangeListener(
-            MiuiActionBar.FragmentViewPagerChangeListener paramFragmentViewPagerChangeListener) {
-        this.mViewPagerController
-                .addOnFragmentViewPagerChangeListener(paramFragmentViewPagerChangeListener);
+            MiuiActionBar.FragmentViewPagerChangeListener listener) {
+        this.mViewPagerController.addOnFragmentViewPagerChangeListener(listener);
     }
 
-    public void addTab(ActionBar.Tab paramTab) {
+    public void addTab(ActionBar.Tab tab) {
         if (!isFragmentViewPagerMode()) {
-            super.addTab(paramTab);
+            super.addTab(tab);
             return;
         }
         throw new IllegalStateException(
                 "Cannot add tab directly in fragment view pager mode!\n Please using addFragmentTab().");
     }
 
-    public void addTab(ActionBar.Tab paramTab, int paramInt) {
+    public void addTab(ActionBar.Tab tab, int position) {
         if (!isFragmentViewPagerMode()) {
-            super.addTab(paramTab, paramInt);
+            super.addTab(tab, position);
             return;
         }
         throw new IllegalStateException(
                 "Cannot add tab directly in fragment view pager mode!\n Please using addFragmentTab().");
     }
 
-    public void addTab(ActionBar.Tab paramTab, int paramInt, boolean paramBoolean) {
+    public void addTab(ActionBar.Tab tab, int position, boolean setSelected) {
         if (!isFragmentViewPagerMode()) {
-            super.addTab(paramTab, paramInt, paramBoolean);
+            super.addTab(tab, position, setSelected);
             return;
         }
         throw new IllegalStateException(
                 "Cannot add tab directly in fragment view pager mode!\n Please using addFragmentTab().");
     }
 
-    public void addTab(ActionBar.Tab paramTab, boolean paramBoolean) {
+    public void addTab(ActionBar.Tab tab, boolean setSelected) {
         if (!isFragmentViewPagerMode()) {
-            super.addTab(paramTab, paramBoolean);
+            super.addTab(tab, setSelected);
             return;
         }
         throw new IllegalStateException(
                 "Cannot add tab directly in fragment view pager mode!\n Please using addFragmentTab().");
     }
 
-    public DefaultActionMode createActionMode(ActionMode.Callback paramCallback) {
+    /*public DefaultActionMode createActionMode(ActionMode.Callback paramCallback) {
         if ((paramCallback instanceof SearchActionMode.Callback))
             ;
         for (Object localObject = new SearchActionMode(getThemedContext(),
                 (SearchActionMode.Callback) paramCallback);; localObject = new EditActionMode(
                 getThemedContext(), paramCallback))
             return localObject;
+    }*/
+    public DefaultActionMode createActionMode(android.view.ActionMode.Callback callback) {
+        // Object obj;
+        if (callback instanceof SearchActionMode.Callback)
+            // obj = new SearchActionMode(getThemedContext(),
+            // (SearchActionMode.Callback) callback);
+            return ((DefaultActionMode) (new SearchActionMode(getThemedContext(),
+                    (SearchActionMode.Callback) callback)));
+        else
+            // obj = new EditActionMode(getThemedContext(), callback);
+            return ((DefaultActionMode) (new EditActionMode(getThemedContext(), callback)));
+        // return ((DefaultActionMode) (obj));
     }
 
-    public ActionModeView createActionModeView(ActionMode.Callback paramCallback) {
+    /*public ActionModeView createActionModeView(ActionMode.Callback paramCallback) {
         if ((paramCallback instanceof SearchActionMode.Callback)) {
             if (this.mSearchActionModeView == null)
                 this.mSearchActionModeView = createSearchActionModeView();
@@ -166,27 +185,41 @@ public class ActionBarImpl extends com.android.internal.app.ActionBarImpl implem
         }
         for (Object localObject = this.mSearchActionModeView;; localObject = (ActionModeView) getContextView())
             return localObject;
+    }*/
+    public ActionModeView createActionModeView(android.view.ActionMode.Callback callback) {
+        ActionModeView view;
+        if (callback instanceof SearchActionMode.Callback) {
+            if (mSearchActionModeView == null)
+                mSearchActionModeView = createSearchActionModeView();
+            if (mSearchActionModeView.getParent() != mDecor)
+                mDecor.addView(mSearchActionModeView);
+            view = mSearchActionModeView;
+        } else {
+            view = (ActionModeView) getContextView();
+        }
+        return view;
     }
 
     public SearchActionModeView createSearchActionModeView() {
-        SearchActionModeView localSearchActionModeView = (SearchActionModeView) LayoutInflater
-                .from(getThemedContext()).inflate(100859971, this.mDecor, false);
-        localSearchActionModeView.setOnBackClickListener(new View.OnClickListener() {
-            public void onClick(View paramAnonymousView) {
-                if (ActionBarImpl.this.mCurrentActionMode != null)
-                    ActionBarImpl.this.mCurrentActionMode.finish();
+        SearchActionModeView view = (SearchActionModeView) LayoutInflater.from(getThemedContext())
+                .inflate(R.layout.v5_search_action_mode_view,// 0x6030043,
+                        mDecor, false);
+        view.setOnBackClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mCurrentActionMode != null)
+                    mCurrentActionMode.finish();
             }
         });
-        return localSearchActionModeView;
+        return view;
     }
 
-    public DimAnimator getDimAnimator(boolean paramBoolean,
-            View.OnClickListener paramOnClickListener) {
-        return new DimAnimator(paramBoolean, paramOnClickListener);
+    public DimAnimator getDimAnimator(boolean fromActionBar, View.OnClickListener listener) {
+        return new DimAnimator(fromActionBar, listener);
     }
 
-    public Fragment getFragmentAt(int paramInt) {
-        return this.mViewPagerController.getFragmentAt(paramInt);
+    public Fragment getFragmentAt(int position) {
+        return this.mViewPagerController.getFragmentAt(position);
     }
 
     public int getFragmentTabCount() {
@@ -194,7 +227,7 @@ public class ActionBarImpl extends com.android.internal.app.ActionBarImpl implem
     }
 
     public CharSequence getTertiaryTitle() {
-        return ((com.miui.internal.v5.widget.ActionBarView) getActionView()).getTertiaryTitle();
+        return ((ActionBarView) getActionView()).getTertiaryTitle();
     }
 
     public int getViewPagerOffscreenPageLimit() {
@@ -205,44 +238,69 @@ public class ActionBarImpl extends com.android.internal.app.ActionBarImpl implem
         return this.mWindow;
     }
 
-    void internalAddTab(ActionBar.Tab paramTab) {
+    /*void internalAddTab(ActionBar.Tab paramTab) {
         if (getTabCount() == 0)
             ;
         for (boolean bool = true;; bool = false) {
             super.addTab(paramTab, bool);
             return;
         }
+    }*/
+    void internalAddTab(ActionBar.Tab tab) {
+        boolean flag;
+        if (getTabCount() == 0)
+            flag = true;
+        else
+            flag = false;
+        super.addTab(tab, flag);
     }
 
-    void internalAddTab(ActionBar.Tab paramTab, int paramInt) {
+
+    /*void internalAddTab(ActionBar.Tab paramTab, int paramInt) {
         if (getTabCount() == paramInt)
             ;
         for (boolean bool = true;; bool = false) {
             super.addTab(paramTab, paramInt, bool);
             return;
         }
+    }*/
+    void internalAddTab(ActionBar.Tab tab, int position) {
+        boolean flag;
+        if (getTabCount() == position)
+            flag = true;
+        else
+            flag = false;
+        super.addTab(tab, position, flag);
     }
 
     void internalRemoveAllTabs() {
         super.removeAllTabs();
     }
 
-    void internalRemoveTab(ActionBar.Tab paramTab) {
-        super.removeTab(paramTab);
+    void internalRemoveTab(ActionBar.Tab tab) {
+        super.removeTab(tab);
     }
 
-    void internalRemoveTabAt(int paramInt) {
-        super.removeTabAt(paramInt);
+    void internalRemoveTabAt(int position) {
+        super.removeTabAt(position);
     }
 
-    public boolean isFragmentViewPagerMode() {
+    /*public boolean isFragmentViewPagerMode() {
         if (this.mViewPagerController != null)
             ;
         for (boolean bool = true;; bool = false)
             return bool;
+    }*/
+    public boolean isFragmentViewPagerMode() {
+        boolean flag;
+        if (mViewPagerController != null)
+            flag = true;
+        else
+            flag = false;
+        return flag;
     }
 
-    void miuiAnimateToMode(boolean paramBoolean) {
+    /*void miuiAnimateToMode(boolean paramBoolean) {
         ScrollingTabContainerView localScrollingTabContainerView = (ScrollingTabContainerView) getTabScrollView();
         if ((localScrollingTabContainerView != null) && (!paramBoolean))
             localScrollingTabContainerView.bringToFront();
@@ -255,15 +313,31 @@ public class ActionBarImpl extends com.android.internal.app.ActionBarImpl implem
                 ((View) this.mCurrentActionModeView).bringToFront();
             return;
         }
+    }*/
+    void miuiAnimateToMode(boolean visible) {
+        ScrollingTabContainerView tabScrollView = (ScrollingTabContainerView) getTabScrollView();
+        if (tabScrollView != null && !visible)
+            tabScrollView.bringToFront();
+        //ActionModeView actionmodeview = mCurrentActionModeView;
+        int i;
+        if (visible)
+            i = 0;
+        else
+            i = 8;
+        //actionmodeview.animateToVisibility(i);
+        mCurrentActionModeView.animateToVisibility(i);
+        if (visible)
+            ((View) mCurrentActionModeView).bringToFront();
     }
 
     public ActionBar.Tab newTab() {
         return new TabImpl();
     }
 
-    public void onActionModeFinish(ActionMode paramActionMode) {
+    @Override
+    public void onActionModeFinish(ActionMode mode) {
         miuiAnimateToMode(false);
-        if (paramActionMode == this.mCurrentActionMode) {
+        if (mode == this.mCurrentActionMode) {
             this.mCurrentActionMode = null;
             this.mCurrentActionModeView = null;
         }
@@ -290,55 +364,56 @@ public class ActionBarImpl extends com.android.internal.app.ActionBarImpl implem
                 "Cannot remove tab directly in fragment view pager mode!\n Please using removeAllFragmentTabs().");
     }
 
-    public void removeFragmentTab(ActionBar.Tab paramTab) {
-        this.mViewPagerController.removeFragmentTab(paramTab);
+    public void removeFragmentTab(ActionBar.Tab tab) {
+        this.mViewPagerController.removeFragmentTab(tab);
     }
 
-    public void removeFragmentTab(Fragment paramFragment) {
-        this.mViewPagerController.removeFragment(paramFragment);
+    @Override
+    public void removeFragmentTab(Fragment fragment) {
+        this.mViewPagerController.removeFragment(fragment);
     }
 
-    public void removeFragmentTab(String paramString) {
-        this.mViewPagerController.removeFragmentTab(paramString);
+    public void removeFragmentTab(String tag) {
+        this.mViewPagerController.removeFragmentTab(tag);
     }
 
-    public void removeFragmentTabAt(int paramInt) {
-        this.mViewPagerController.removeFragmentAt(paramInt);
+    public void removeFragmentTabAt(int position) {
+        this.mViewPagerController.removeFragmentAt(position);
     }
 
     public void removeOnFragmentViewPagerChangeListener(
-            MiuiActionBar.FragmentViewPagerChangeListener paramFragmentViewPagerChangeListener) {
-        this.mViewPagerController
-                .removeOnFragmentViewPagerChangeListener(paramFragmentViewPagerChangeListener);
+            MiuiActionBar.FragmentViewPagerChangeListener listener) {
+        this.mViewPagerController.removeOnFragmentViewPagerChangeListener(listener);
     }
 
-    public void removeTab(ActionBar.Tab paramTab) {
+    public void removeTab(ActionBar.Tab tab) {
         if (!isFragmentViewPagerMode()) {
-            super.removeTab(paramTab);
+            super.removeTab(tab);
             return;
         }
         throw new IllegalStateException(
                 "Cannot remove tab directly in fragment view pager mode!\n Please using removeFragmentTab().");
     }
 
-    public void removeTabAt(int paramInt) {
+    public void removeTabAt(int position) {
         if (!isFragmentViewPagerMode()) {
-            super.removeTabAt(paramInt);
+            super.removeTabAt(position);
             return;
         }
         throw new IllegalStateException(
                 "Cannot remove tab directly in fragment view pager mode!\n Please using removeFragmentTab().");
     }
 
-    public void setFragmentActionMenuAt(int paramInt, boolean paramBoolean) {
-        this.mViewPagerController.setFragmentActionMenuAt(paramInt, paramBoolean);
+    public void setFragmentActionMenuAt(int position, boolean hasActionMenu) {
+        this.mViewPagerController.setFragmentActionMenuAt(position, hasActionMenu);
     }
 
-    public void setFragmentViewPagerMode(Context paramContext, FragmentManager paramFragmentManager) {
-        setFragmentViewPagerMode(paramContext, paramFragmentManager, true);
+    @Override
+    public void setFragmentViewPagerMode(Context context, FragmentManager fm) {
+        setFragmentViewPagerMode(context, fm, true);
     }
 
-    public void setFragmentViewPagerMode(Context paramContext,
+    /*public void setFragmentViewPagerMode(Context paramContext,
             FragmentManager paramFragmentManager, boolean paramBoolean) {
         if (isFragmentViewPagerMode())
             ;
@@ -353,22 +428,34 @@ public class ActionBarImpl extends com.android.internal.app.ActionBarImpl implem
             addOnFragmentViewPagerChangeListener(localScrollingTabContainerView);
             addOnFragmentViewPagerChangeListener((com.miui.internal.v5.widget.ActionBarContainer) getSplitView());
         }
+    }*/
+    @Override
+    public void setFragmentViewPagerMode(Context context, FragmentManager fm,
+            boolean allowListAnimation) {
+        if (!isFragmentViewPagerMode()) {
+            removeAllTabs();
+            setNavigationMode(2);
+            ScrollingTabContainerView scrollingTabContainerView = (ScrollingTabContainerView) getTabScrollView();
+            mViewPagerController = new ViewPagerController(this, fm, allowListAnimation);
+            scrollingTabContainerView.setFragmentViewPagerMode(isFragmentViewPagerMode());
+            addOnFragmentViewPagerChangeListener(scrollingTabContainerView);
+            addOnFragmentViewPagerChangeListener((ActionBarContainer) getSplitView());
+        }
     }
 
-    public void setTertiaryTitle(int paramInt) {
-        setTertiaryTitle(getThemedContext().getResources().getString(paramInt));
+    public void setTertiaryTitle(int resId) {
+        setTertiaryTitle(getThemedContext().getResources().getString(resId));
     }
 
-    public void setTertiaryTitle(CharSequence paramCharSequence) {
-        ((com.miui.internal.v5.widget.ActionBarView) getActionView())
-                .setTertiaryTitle(paramCharSequence);
+    public void setTertiaryTitle(CharSequence title) {
+        ((ActionBarView) getActionView()).setTertiaryTitle(title);
     }
 
-    public void setViewPagerOffscreenPageLimit(int paramInt) {
-        this.mViewPagerController.setViewPagerOffscreenPageLimit(paramInt);
+    public void setViewPagerOffscreenPageLimit(int limit) {
+        this.mViewPagerController.setViewPagerOffscreenPageLimit(limit);
     }
 
-    public void showActionBarShadow(boolean paramBoolean) {
+    /*public void showActionBarShadow(boolean paramBoolean) {
         View localView = this.mDecor.findViewById(101384348);
         if (localView != null)
             if (!paramBoolean)
@@ -377,9 +464,20 @@ public class ActionBarImpl extends com.android.internal.app.ActionBarImpl implem
             localView.setVisibility(i);
             return;
         }
+    }*/
+    public void showActionBarShadow(boolean show) {
+        View view = mDecor.findViewById(/*0x60b009c*/R.id.v5_action_bar_shadow);
+        if (view != null) {
+            int i;
+            if (show)
+                i = 0;
+            else
+                i = 8;
+            view.setVisibility(i);
+        }
     }
 
-    public void showSplitActionBar(boolean paramBoolean1, boolean paramBoolean2) {
+    /*public void showSplitActionBar(boolean paramBoolean1, boolean paramBoolean2) {
         com.miui.internal.v5.widget.ActionBarContainer localActionBarContainer;
         if (getActionView().isSplitActionBar()) {
             localActionBarContainer = (com.miui.internal.v5.widget.ActionBarContainer) getSplitView();
@@ -391,9 +489,18 @@ public class ActionBarImpl extends com.android.internal.app.ActionBarImpl implem
             return;
             label28: localActionBarContainer.hide(paramBoolean2);
         }
+    }*/
+    public void showSplitActionBar(boolean show, boolean animation) {
+        if (getActionView().isSplitActionBar()) {
+            ActionBarContainer split = (ActionBarContainer) getSplitView();
+            if (show)
+                split.show(animation);
+            else
+                split.hide(animation);
+        }
     }
 
-    public ActionMode startActionMode(ActionMode.Callback paramCallback) {
+    /*public ActionMode startActionMode(ActionMode.Callback paramCallback) {
         com.miui.internal.v5.widget.ActionBarContainer localActionBarContainer = (com.miui.internal.v5.widget.ActionBarContainer) getSplitView();
         int i = getContextDisplayMode();
         ActionBarOverlayLayout localActionBarOverlayLayout = getActionBarOverlayLayout();
@@ -418,18 +525,45 @@ public class ActionBarImpl extends com.android.internal.app.ActionBarImpl implem
             if (this.mCurrentActionMode != null)
                 this.mCurrentActionMode.finish();
         }
+    }*/
+    public ActionMode startActionMode(android.view.ActionMode.Callback callback) {
+        ActionBarContainer splitView = (ActionBarContainer) getSplitView();
+        int contextDisplayMode = getContextDisplayMode();
+        ActionBarOverlayLayout overlayLayout = getActionBarOverlayLayout();
+        if (mCurrentActionMode != null)
+            mCurrentActionMode.finish();
+        mCurrentActionMode = createActionMode(callback);
+        mCurrentActionMode.setActionModeCallback(this);
+        mCurrentActionModeView = createActionModeView(callback);
+        mCurrentActionMode.setActionModeView(mCurrentActionModeView);
+        DefaultActionMode defaultactionmode;
+        if (mCurrentActionMode.dispatchOnCreate()) {
+            mCurrentActionMode.invalidate();
+            miuiAnimateToMode(true);
+            if (splitView != null && contextDisplayMode == 1 && splitView.getVisibility() != 0) {
+                splitView.setVisibility(0);
+                if (overlayLayout != null)
+                    overlayLayout.requestFitSystemWindows();
+            }
+            defaultactionmode = mCurrentActionMode;
+        } else {
+            if (mCurrentActionMode != null)
+                mCurrentActionMode.finish();
+            defaultactionmode = null;
+        }
+        return defaultactionmode;
     }
 
-    public class DimAnimator implements Animator.AnimatorListener {
+    public class DimAnimator implements AnimatorListener {
         private boolean mDimActionBarOrSplitActionBar;
         private Animator mDimHidingAnimator;
         private Animator mDimShowingAnimator;
         private View.OnClickListener mDimViewClickListener = null;
 
-        public DimAnimator(boolean paramOnClickListener, View.OnClickListener arg3) {
-            Object localObject;
-            this.mDimViewClickListener = localObject;
-            this.mDimActionBarOrSplitActionBar = paramOnClickListener;
+        public DimAnimator(boolean fromActionBar, View.OnClickListener listener) {
+            //Object localObject;
+            //this.mDimViewClickListener = localObject;
+            this.mDimActionBarOrSplitActionBar = fromActionBar;
             this.mDimShowingAnimator = ObjectAnimator.ofFloat(ActionBarImpl.this.mDimView, "alpha",
                     new float[] {
                             0.0F, 1.0F
@@ -450,16 +584,18 @@ public class ActionBarImpl extends com.android.internal.app.ActionBarImpl implem
             return this.mDimShowingAnimator;
         }
 
-        public void onAnimationCancel(Animator paramAnimator) {
-            if (paramAnimator == this.mDimHidingAnimator) {
+        @Override
+        public void onAnimationCancel(Animator animation) {
+            if (animation == this.mDimHidingAnimator) {
                 if (!this.mDimActionBarOrSplitActionBar)
                     ActionBarImpl.this.getSplitView().bringToFront();
                 ActionBarImpl.this.mDimView.setOnClickListener(null);
             }
         }
 
-        public void onAnimationEnd(Animator paramAnimator) {
-            if (paramAnimator == this.mDimHidingAnimator) {
+        @Override
+        public void onAnimationEnd(Animator animation) {
+            if (animation == this.mDimHidingAnimator) {
                 if (!this.mDimActionBarOrSplitActionBar)
                     ActionBarImpl.this.getSplitView().bringToFront();
                 ActionBarImpl.this.mDimView.setOnClickListener(null);
@@ -467,11 +603,13 @@ public class ActionBarImpl extends com.android.internal.app.ActionBarImpl implem
             }
         }
 
-        public void onAnimationRepeat(Animator paramAnimator) {
+        @Override
+        public void onAnimationRepeat(Animator animation) {
         }
 
-        public void onAnimationStart(Animator paramAnimator) {
-            if (paramAnimator == this.mDimShowingAnimator) {
+        @Override
+        public void onAnimationStart(Animator animation) {
+            /*if (paramAnimator == this.mDimShowingAnimator) {
                 ActionBarImpl.this.mDimView.setVisibility(0);
                 ActionBarImpl.this.mDimView.bringToFront();
                 if (!this.mDimActionBarOrSplitActionBar)
@@ -482,6 +620,15 @@ public class ActionBarImpl extends com.android.internal.app.ActionBarImpl implem
                 ActionBarImpl.this.mDimView.setOnClickListener(this.mDimViewClickListener);
                 return;
                 label61: ActionBarImpl.this.getSplitView().bringToFront();
+            }*/
+            if (animation == mDimShowingAnimator) {
+                mDimView.setVisibility(0);
+                mDimView.bringToFront();
+                if (mDimActionBarOrSplitActionBar)
+                    getContainerView().bringToFront();
+                else
+                    getSplitView().bringToFront();
+                mDimView.setOnClickListener(mDimViewClickListener);
             }
         }
     }
@@ -495,29 +642,15 @@ public class ActionBarImpl extends com.android.internal.app.ActionBarImpl implem
             super.setTabListener(ActionBarImpl.sLisenter);
         }
 
-        ActionBar.Tab setSystemTabListener(ActionBar.TabListener paramTabListener) {
-            this.mSystemLisenter = paramTabListener;
+        ActionBar.Tab setSystemTabListener(ActionBar.TabListener callback) {
+            this.mSystemLisenter = callback;
             return this;
         }
 
-        public ActionBar.Tab setTabListener(ActionBar.TabListener paramTabListener) {
-            this.mUserLisenter = paramTabListener;
+        public ActionBar.Tab setTabListener(ActionBar.TabListener callback) {
+            this.mUserLisenter = callback;
             return this;
         }
-    }
-
-    @Override
-    public int addFragmentTab(String paramString, Tab paramTab, int paramInt,
-            Class<? extends Fragment> paramClass, Bundle paramBundle, boolean paramBoolean) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public int addFragmentTab(String paramString, Tab paramTab,
-            Class<? extends Fragment> paramClass, Bundle paramBundle, boolean paramBoolean) {
-        // TODO Auto-generated method stub
-        return 0;
     }
 
     @Override
@@ -611,12 +744,6 @@ public class ActionBarImpl extends com.android.internal.app.ActionBarImpl implem
     }
 
     @Override
-    public void removeFragmentTab(Fragment paramFragment) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
     public void removeOnMenuVisibilityListener(
             OnMenuVisibilityListener paramOnMenuVisibilityListener) {
         // TODO Auto-generated method stub
@@ -691,19 +818,6 @@ public class ActionBarImpl extends com.android.internal.app.ActionBarImpl implem
 
     @Override
     public void setDisplayUseLogoEnabled(boolean paramBoolean) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void setFragmentViewPagerMode(Context paramContext, FragmentManager paramFragmentManager) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void setFragmentViewPagerMode(Context paramContext,
-            FragmentManager paramFragmentManager, boolean paramBoolean) {
         // TODO Auto-generated method stub
 
     }
@@ -798,11 +912,4 @@ public class ActionBarImpl extends com.android.internal.app.ActionBarImpl implem
         // TODO Auto-generated method stub
 
     }
-
-    @Override
-    public void onActionModeFinish(ActionMode paramActionMode) {
-        // TODO Auto-generated method stub
-
-    }
-
 }

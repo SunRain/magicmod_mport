@@ -809,7 +809,7 @@ public class SearchActionModeView extends FrameLayout implements AnimatorListene
         }
 
         public void onStart() {
-            if (SearchActionModeView.this.mAnimationMode == 1) {
+            /*if (SearchActionModeView.this.mAnimationMode == 1) {
                 int i = View.MeasureSpec.makeMeasureSpec(0, 0);
                 SearchActionModeView.this.mBackView.measure(i, i);
                 SearchActionModeView.access$202(SearchActionModeView.this,
@@ -825,11 +825,31 @@ public class SearchActionModeView extends FrameLayout implements AnimatorListene
                     SearchActionModeView.this
                             .setTranslationY(SearchActionModeView.this.mLocation[1]);
                 }
+            }*/
+            if (mAnimationMode == 1) {
+                int i = View.MeasureSpec.makeMeasureSpec(0, 0);
+                //SearchActionModeView.access$100(SearchActionModeView.this).measure(i, i);
+                mBackView.measure(i, i);
+                //SearchActionModeView.access$202(SearchActionModeView.this, -SearchActionModeView
+                //        .access$100(SearchActionModeView.this).getMeasuredWidth());
+                mBackViewTranslationXStart = -mBackView.getMeasuredWidth();
+                //SearchActionModeView.access$302(SearchActionModeView.this, SearchActionModeView
+                //        .access$100(SearchActionModeView.this).getMeasuredWidth());
+                mBackViewTranslationXLength = mBackView.getMeasuredWidth();
+                //SearchActionModeView.access$400(SearchActionModeView.this).getText().clear();
+                mInputView.getText().clear();
+                //SearchActionModeView.access$400(SearchActionModeView.this).addTextChangedListener(
+                //        SearchActionModeView.this);
+                mInputView.addTextChangedListener(SearchActionModeView.this);
+                if (!hasAnchorAndAnimateView()) {
+                    getActionBarContainer().getLocationInWindow(mLocation);
+                    setTranslationY(mLocation[1]);
+                }
             }
         }
 
         public void onStop() {
-            if (SearchActionModeView.this.mAnimationMode == 1) {
+            /*if (SearchActionModeView.this.mAnimationMode == 1) {
                 ViewGroup.MarginLayoutParams localMarginLayoutParams = (ViewGroup.MarginLayoutParams) SearchActionModeView.this.mInputView
                         .getLayoutParams();
                 localMarginLayoutParams.leftMargin = (SearchActionModeView.this.mBackView
@@ -841,16 +861,23 @@ public class SearchActionModeView extends FrameLayout implements AnimatorListene
                 return;
                 SearchActionModeView.this.mInputView
                         .removeTextChangedListener(SearchActionModeView.this);
+            }*/
+            if (mAnimationMode == 1) {
+                ViewGroup.MarginLayoutParams lParams = (ViewGroup.MarginLayoutParams) mInputView
+                        .getLayoutParams();
+                lParams.leftMargin = (mBackView.getWidth() - getPaddingLeft());
+                mInputView.setLayoutParams(lParams);
+                mInputView.requestFocus();
+            } else {
+                mInputView.removeTextChangedListener(SearchActionModeView.this);
             }
         }
 
-        public void onUpdate(float paramFloat) {
-            SearchActionModeView.this.mBackView
-                    .setTranslationX(SearchActionModeView.this.mBackViewTranslationXStart
-                            + paramFloat * SearchActionModeView.this.mBackViewTranslationXLength);
-            SearchActionModeView.this.mInputView
-                    .setLeft((int) (paramFloat * (SearchActionModeView.this.mBackViewTranslationXLength - SearchActionModeView.this
-                            .getPaddingLeft())) + SearchActionModeView.this.getPaddingLeft());
+        public void onUpdate(float percent) {
+            mBackView.setTranslationX(mBackViewTranslationXStart + percent
+                    * mBackViewTranslationXLength);
+            mInputView.setLeft((int) (percent * (mBackViewTranslationXLength - getPaddingLeft()))
+                    + getPaddingLeft());
         }
     }
 
@@ -858,12 +885,12 @@ public class SearchActionModeView extends FrameLayout implements AnimatorListene
         SplitActionBarSearchModeAnimationListener() {
         }
 
-        public void onUpdate(float paramFloat) {
-            ActionBarContainer localActionBarContainer = SearchActionModeView.this
+        public void onUpdate(float percent) {
+            ActionBarContainer splitActionBarContainer = SearchActionModeView.this
                     .getSplitActionBarContainer();
-            if (localActionBarContainer != null)
-                localActionBarContainer.setTranslationY(paramFloat
-                        * localActionBarContainer.getHeight());
+            if (splitActionBarContainer != null)
+                splitActionBarContainer.setTranslationY(percent
+                        * splitActionBarContainer.getHeight());
         }
     }
 
