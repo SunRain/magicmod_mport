@@ -14,31 +14,31 @@ public class ActionMenuPrimaryItemImageView extends ImageView implements ActionM
     private MenuItemImpl mItemData;
     private MenuBuilder.ItemInvoker mItemInvoker;
 
-    public ActionMenuPrimaryItemImageView(Context context, AttributeSet paramAttributeSet) {
-        super(context, paramAttributeSet);
+    public ActionMenuPrimaryItemImageView(Context context, AttributeSet attrs) {
+        super(context, attrs);
     }
 
     public MenuItemImpl getItemData() {
         return this.mItemData;
     }
 
-    public void initialize(MenuItemImpl paramMenuItemImpl, int paramInt) {
-        this.mItemData = paramMenuItemImpl;
+    public void initialize(MenuItemImpl itemData, int menuType) {
+        this.mItemData = itemData;
         setSelected(false);
-        setTitle(paramMenuItemImpl.getTitle());
-        setIcon(paramMenuItemImpl.getIcon());
-        setCheckable(paramMenuItemImpl.isCheckable());
-        setChecked(paramMenuItemImpl.isChecked());
-        setEnabled(paramMenuItemImpl.isEnabled());
+        setTitle(itemData.getTitle());
+        setIcon(itemData.getIcon());
+        setCheckable(itemData.isCheckable());
+        setChecked(itemData.isChecked());
+        setEnabled(itemData.isEnabled());
     }
 
-    protected void onMeasure(int paramInt1, int paramInt2) {
-        super.onMeasure(paramInt1, paramInt2);
-        Drawable localDrawable = getBackground();
-        if (localDrawable != null) {
-            int i = localDrawable.getIntrinsicWidth();
-            int j = localDrawable.getIntrinsicHeight();
-            setMeasuredDimension(Math.min(i, getMeasuredWidth()), Math.min(j, getMeasuredHeight()));
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        Drawable d = getBackground();
+        if (d != null) {
+            int backgroundWidth = d.getIntrinsicWidth();
+            int backgroundHeight = d.getIntrinsicHeight();
+            setMeasuredDimension(Math.min(backgroundWidth, getMeasuredWidth()), Math.min(backgroundHeight, getMeasuredHeight()));
         }
     }
 
@@ -53,40 +53,42 @@ public class ActionMenuPrimaryItemImageView extends ImageView implements ActionM
          //   else
          //       bool = false;
         //}
-        super.performClick();
-        if ((mItemInvoker != null) && mItemInvoker.invokeItem(mItemData)) {
-            playSoundEffect(0);
-            return true;
-        } else {
-            return false;
+        if (!super.performClick()) {
+            if ((mItemInvoker != null) && mItemInvoker.invokeItem(mItemData)) {
+                playSoundEffect(0);
+                return true;
+            } else {
+                return false;
+            }
         }
+        return true;
     }
 
     public boolean prefersCondensedTitle() {
         return false;
     }
 
-    public void setCheckable(boolean paramBoolean) {
-        this.mIsCheckable = paramBoolean;
+    public void setCheckable(boolean checkable) {
+        this.mIsCheckable = checkable;
     }
 
-    public void setChecked(boolean paramBoolean) {
+    public void setChecked(boolean checked) {
         if (this.mIsCheckable)
-            setSelected(paramBoolean);
+            setSelected(checked);
     }
 
-    public void setIcon(Drawable paramDrawable) {
-        setImageDrawable(paramDrawable);
+    public void setIcon(Drawable icon) {
+        setImageDrawable(icon);
     }
 
-    public void setItemInvoker(MenuBuilder.ItemInvoker paramItemInvoker) {
-        this.mItemInvoker = paramItemInvoker;
+    public void setItemInvoker(MenuBuilder.ItemInvoker itemInvoker) {
+        this.mItemInvoker = itemInvoker;
     }
 
-    public void setShortcut(boolean paramBoolean, char paramChar) {
+    public void setShortcut(boolean showShortcut, char shortcutKey) {
     }
 
-    public void setTitle(CharSequence paramCharSequence) {
+    public void setTitle(CharSequence title) {
     }
 
     public boolean showsIcon() {

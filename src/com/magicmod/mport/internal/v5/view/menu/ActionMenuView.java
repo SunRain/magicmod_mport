@@ -1,23 +1,37 @@
 
 package com.magicmod.mport.internal.v5.view.menu;
 
+import android.animation.Animator;
+import android.animation.Animator.AnimatorListener;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.PopupWindow.OnDismissListener;
 
 import com.android.internal.view.menu.MenuBuilder;
+import com.android.internal.view.menu.MenuItemImpl;
+import com.magicmod.mport.internal.v5.app.ActionBarImpl;
+import com.magicmod.mport.internal.v5.widget.ActionBarView;
+import com.magicmod.mport.util.UiUtils;
+import com.magicmod.mport.v5.widget.Views;
+import com.miui.internal.R;
 
 public class ActionMenuView extends com.android.internal.view.menu.ActionMenuView implements
-        OnClickListener, OnDismissListener {
-    private static final int VIEW_STATE_COLLAPSED = 0;
-    private static final int VIEW_STATE_COLLAPSING = 1;
-    private static final int VIEW_STATE_EXPANDED = 3;
-    private static final int VIEW_STATE_EXPANDING = 2;
+        View.OnClickListener, OnDismissListener {
+    private static final int VIEW_STATE_COLLAPSED = 0x0;
+    private static final int VIEW_STATE_COLLAPSING = 0x1;
+    private static final int VIEW_STATE_EXPANDED = 0x3;
+    private static final int VIEW_STATE_EXPANDING = 0x2;
     private ExpandCollapseAnimator mExpandCollapseAnimator;
     private MenuBuilder mMenu;
     private PopupWindow mMenuPopupWindow;
@@ -30,23 +44,23 @@ public class ActionMenuView extends com.android.internal.view.menu.ActionMenuVie
     private int mPrimaryContainerHeight;
     private LinearLayout mSecondaryContainer;
     private int mSecondaryContainerLayoutResId;
-    private int mViewState = 0;
+    private int mViewState;// = 0;
 
-    public ActionMenuView(Context paramContext) {
-        this(paramContext, null);
+    public ActionMenuView(Context context) {
+        this(context, null);
     }
 
-    public ActionMenuView(Context paramContext, AttributeSet paramAttributeSet) {
-        super(paramContext, paramAttributeSet);
-        TypedArray localTypedArray = paramContext.obtainStyledAttributes(paramAttributeSet,
-                R.styleable.ActionMenuView);
-        this.mMoreIcon = localTypedArray.getDrawable(1);
-        this.mSecondaryContainerLayoutResId = localTypedArray.getResourceId(2, 0);
-        this.mPrimaryContainerExpanedBackground = localTypedArray.getDrawable(0);
-        localTypedArray.recycle();
+    public ActionMenuView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        mViewState = 0;
+        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.ActionMenuView);
+        this.mMoreIcon = a.getDrawable(1);
+        this.mSecondaryContainerLayoutResId = a.getResourceId(2, 0);
+        this.mPrimaryContainerExpanedBackground = a.getDrawable(0);
+        a.recycle();
     }
 
-    private float computeAlpha(float paramFloat, boolean paramBoolean1, boolean paramBoolean2) {
+    /*private float computeAlpha(float paramFloat, boolean paramBoolean1, boolean paramBoolean2) {
         float f = 1.0F;
         if ((paramBoolean1) && (paramBoolean2))
             ;
@@ -57,9 +71,22 @@ public class ActionMenuView extends com.android.internal.view.menu.ActionMenuVie
             else if (paramBoolean2)
                 f = (int) (paramFloat * 10.0F) / 10.0F;
         }
+    }*/
+    private float computeAlpha(float percent, boolean fromHasActionMenu, boolean toHasActionMenu) {
+        float alpha = 1.0F;
+        if (!fromHasActionMenu || !toHasActionMenu) {
+            if (fromHasActionMenu)
+                alpha = (float) (int) (10F * (1.0F - percent)) / 10F;
+            else if (toHasActionMenu)
+                alpha = (float) (int) (percent * 10F) / 10F;
+            return alpha;
+        } else {
+            return alpha;
+        }
     }
 
-    private float computeTranslationY(float paramFloat, boolean paramBoolean1, boolean paramBoolean2) {
+
+    /*private float computeTranslationY(float paramFloat, boolean paramBoolean1, boolean paramBoolean2) {
         float f = this.mPrimaryContainer.getHeight();
         if ((paramBoolean1) && (paramBoolean2))
             if (paramFloat < 0.5D)
@@ -71,31 +98,43 @@ public class ActionMenuView extends com.android.internal.view.menu.ActionMenuVie
             if (paramBoolean2)
                 paramFloat = 1.0F - paramFloat;
         }
+    }*/
+    private float computeTranslationY(float percent, boolean fromHasActionMenu, boolean toHasActionMenu) {
+        float height = mPrimaryContainer.getHeight();
+        if (!fromHasActionMenu || !toHasActionMenu) {
+            if (toHasActionMenu)
+                percent = 1.0F - percent;
+            //return percent * height;
+        } else {
+            if ((double) percent < 0.5D)
+                percent *= 2.0F;
+            else
+                percent = 2.0F * (1.0F - percent);
+        }
+        return percent * height;
     }
 
-    ActionMenuPrimaryItemView createMoreItemView(
-            ActionMenuPrimaryItemView paramActionMenuPrimaryItemView, int paramInt) {
-        if (paramActionMenuPrimaryItemView != null)
-            ;
-        for (ActionMenuPrimaryItemView localActionMenuPrimaryItemView = paramActionMenuPrimaryItemView;; localActionMenuPrimaryItemView = (ActionMenuPrimaryItemView) View
-                .inflate(this.mContext, paramInt, null)) {
-            localActionMenuPrimaryItemView
-                    .setTitle(this.mContext.getResources().getText(101450236));
-            localActionMenuPrimaryItemView.setIcon(this.mMoreIcon);
-            localActionMenuPrimaryItemView.setEnabled(true);
-            localActionMenuPrimaryItemView.setCheckable(true);
-            ((View) localActionMenuPrimaryItemView).setOnClickListener(this);
-            localActionMenuPrimaryItemView.setItemInvoker(this);
-            this.mMoreIconView = ((View) localActionMenuPrimaryItemView);
-            return localActionMenuPrimaryItemView;
-        }
+    ActionMenuPrimaryItemView createMoreItemView(ActionMenuPrimaryItemView convertView, int primaryItemResId) {
+        ActionMenuPrimaryItemView itemView;
+        if (convertView != null)
+            itemView = convertView;
+        else
+            itemView = (ActionMenuPrimaryItemView) View.inflate(mContext, primaryItemResId, null);
+        itemView.setTitle(mContext.getResources().getText(/*0x60c01fc*/R.string.v5_icon_menu_bar_more_item_label));
+        itemView.setIcon(mMoreIcon);
+        itemView.setEnabled(true);
+        itemView.setCheckable(true);
+        ((View) itemView).setOnClickListener(this);
+        itemView.setItemInvoker(this);
+        mMoreIconView = (View) itemView;
+        return itemView;
     }
 
     public int getMenuItems() {
-        int i = this.mPrimaryContainer.getChildCount();
-        if (this.mSecondaryContainer != null)
-            i += this.mSecondaryContainer.getChildCount();
-        return i;
+        int retval = mPrimaryContainer.getChildCount();
+        if (mSecondaryContainer != null)
+            retval += mSecondaryContainer.getChildCount();
+        return retval;
     }
 
     LinearLayout getPrimaryContainer() {
@@ -106,60 +145,61 @@ public class ActionMenuView extends com.android.internal.view.menu.ActionMenuVie
         return this.mPrimaryContainerHeight;
     }
 
-    LinearLayout getSecondaryContainer(boolean paramBoolean) {
-        if ((this.mSecondaryContainer == null) && (paramBoolean)
-                && (this.mSecondaryContainerLayoutResId > 0))
-            this.mSecondaryContainer = ((LinearLayout) Views.inflate(this.mContext,
-                    this.mSecondaryContainerLayoutResId, this, false));
-        if ((this.mSecondaryContainer != null) && (isSplitActionBar())) {
-            ViewParent localViewParent = this.mSecondaryContainer.getParent();
-            if (localViewParent != this) {
-                if ((localViewParent instanceof ViewGroup))
-                    ((ViewGroup) localViewParent).removeView(this.mSecondaryContainer);
+    LinearLayout getSecondaryContainer(boolean create) {
+        if ((mSecondaryContainer == null) && (create) && (mSecondaryContainerLayoutResId > 0))
+            mSecondaryContainer = ((LinearLayout) Views.inflate(mContext,
+                    mSecondaryContainerLayoutResId, this, false));
+        if ((mSecondaryContainer != null) && (isSplitActionBar())) {
+            ViewParent oldParent = mSecondaryContainer.getParent();
+            if (oldParent != this) {
+                if ((oldParent instanceof ViewGroup))
+                    ((ViewGroup) oldParent).removeView(mSecondaryContainer);
                 addView(this.mSecondaryContainer);
             }
         }
-        return this.mSecondaryContainer;
+        return mSecondaryContainer;
     }
 
     public int getSecondryContainerHeight() {
-        int i = 0;
-        if (this.mSecondaryContainer != null)
-            i = this.mSecondaryContainer.getMeasuredHeight();
-        return i;
+        int retval = 0;
+        if (mSecondaryContainer != null)
+            retval = mSecondaryContainer.getMeasuredHeight();
+        return retval;
     }
 
     public int getWindowAnimations() {
         return 0;
     }
 
-    public void initialize(MenuBuilder paramMenuBuilder) {
-        this.mMenu = paramMenuBuilder;
+    public void initialize(MenuBuilder menu) {
+        this.mMenu = menu;
     }
 
-    public boolean invokeItem(MenuItemImpl paramMenuItemImpl) {
-        boolean bool = this.mMenu.performItemAction(paramMenuItemImpl, 0);
-        if (bool)
+    public boolean invokeItem(MenuItemImpl item) {
+        boolean invoked = this.mMenu.performItemAction(item, 0);
+        if (invoked)
             requestExpand(false);
-        return bool;
+        return invoked;
     }
 
     boolean isExpanded() {
-        if (this.mViewState == 3)
-            ;
-        for (boolean bool = true;; bool = false)
-            return bool;
+        boolean flag;
+        if (mViewState == 3)
+            flag = true;
+        else
+            flag = false;
+        return flag;
     }
 
     protected boolean isSplitActionBar() {
-        boolean bool = false;
-        ActionBarView localActionBarView = ActionBarView.findActionBarViewByView(this);
-        if (localActionBarView != null)
-            bool = localActionBarView.isSplitActionBar();
-        return bool;
+        boolean retval = false;
+        ActionBarView actionBarView = ActionBarView.findActionBarViewByView(this);
+        if (actionBarView != null)
+            retval = actionBarView.isSplitActionBar();
+        return retval;
     }
 
-    public void onClick(View paramView) {
+    /*public void onClick(View paramView) {
         switch (paramView.getId()) {
             default:
                 return;
@@ -174,100 +214,113 @@ public class ActionMenuView extends com.android.internal.view.menu.ActionMenuVie
             break;
             break;
         }
+    }*/
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.v5_icon_menu_bar_dim_container: //0x60b00a2:
+            case R.id.v5_icon_menu_bar_primary_item: //0x60b00a3:
+                if (mMoreIconView != null) { //cond_0 in
+                    if (!mMoreIconView.isSelected()) {
+                        requestExpand(true);                        
+                    } else {
+                        requestExpand(false);
+                    }
+                } //cond_0 after
+                break;
+            default:
+                break;
+        }
     }
+    
 
-    public void onConfigurationChanged(Configuration paramConfiguration) {
+    public void onConfigurationChanged(Configuration newConfig) {
         if (this.mSecondaryContainer != null) {
             this.mSecondaryContainer.removeAllViews();
-            ViewParent localViewParent = this.mSecondaryContainer.getParent();
-            if ((localViewParent instanceof ViewGroup))
-                ((ViewGroup) localViewParent).removeView(this.mSecondaryContainer);
+            ViewParent parent = this.mSecondaryContainer.getParent();
+            if ((parent instanceof ViewGroup))
+                ((ViewGroup) parent).removeView(this.mSecondaryContainer);
             this.mSecondaryContainer = null;
         }
-        super.onConfigurationChanged(paramConfiguration);
+        super.onConfigurationChanged(newConfig);
     }
 
     public void onDismiss() {
         this.mViewState = 0;
         this.mMoreIconView.setSelected(false);
         if (this.mSecondaryContainer != null) {
-            ViewParent localViewParent = this.mSecondaryContainer.getParent();
-            if ((localViewParent instanceof ViewGroup))
-                ((ViewGroup) localViewParent).removeView(this.mSecondaryContainer);
+            ViewParent parent = this.mSecondaryContainer.getParent();
+            if ((parent instanceof ViewGroup))
+                ((ViewGroup) parent).removeView(this.mSecondaryContainer);
         }
     }
 
     protected void onFinishInflate() {
         super.onFinishInflate();
         this.mPrimaryContainerHeight = UiUtils.getSplitActionMenuHeight(getContext());
-        this.mPrimaryContainer = ((LinearLayout) findViewById(101384356));
+        this.mPrimaryContainer = ((LinearLayout) findViewById(/*0x60b00a4*/R.id.v5_icon_menu_bar_real_primary_container));
         this.mPrimaryContainerCollapsedBackground = this.mPrimaryContainer.getBackground();
         this.mOpenCloseAnimator = new OpenCloseAnimator();
         this.mExpandCollapseAnimator = new ExpandCollapseAnimator();
     }
 
-    protected void onLayout(boolean paramBoolean, int paramInt1, int paramInt2, int paramInt3,
-            int paramInt4) {
+    protected void onLayout(boolean changed, int l, int t, int r, int b) {
         if (isSplitActionBar()) {
-            int i = getSecondryContainerHeight();
-            this.mPrimaryContainer.layout(0, 0, paramInt3 - paramInt1, paramInt4 - paramInt2 - i);
-            if (this.mSecondaryContainer != null)
-                this.mSecondaryContainer.layout(0, paramInt4 - paramInt2 - i,
-                        paramInt3 - paramInt1, paramInt4 - paramInt2);
-        }
-        while (true) {
-            return;
-            this.mPrimaryContainer.layout(0, 0, paramInt3 - paramInt1, paramInt4 - paramInt2);
+            int secondaryContainerHeight = getSecondryContainerHeight();
+            mPrimaryContainer.layout(0, 0, r - l, b - t - secondaryContainerHeight);
+            if (mSecondaryContainer != null)
+                mSecondaryContainer.layout(0, b - t - secondaryContainerHeight, r - l, b - t);
+        } else {
+            mPrimaryContainer.layout(0, 0, r - l, b - t);
         }
     }
 
-    protected void onMeasure(int paramInt1, int paramInt2) {
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         if (getMenuItems() == 0) {
             setMeasuredDimension(0, 0);
-            return;
-        }
-        int i = 81;
-        if (!isSplitActionBar())
-            i = 5;
-        this.mPrimaryContainer.setGravity(i);
-        this.mPrimaryContainer.measure(paramInt1, paramInt2);
-        int j = this.mPrimaryContainer.getMeasuredWidth();
-        int k = this.mPrimaryContainer.getMeasuredHeight();
-        if ((isSplitActionBar()) && (this.mSecondaryContainer != null)) {
-            this.mSecondaryContainer.measure(paramInt1, View.MeasureSpec.makeMeasureSpec(0, 0));
-            k += this.mSecondaryContainer.getMeasuredHeight();
-            if (isExpanded())
+        } else {
+            byte gravity = 0x51;//81;
+            if (!isSplitActionBar())
+                gravity = 0x5;
+            mPrimaryContainer.setGravity(gravity);
+            mPrimaryContainer.measure(widthMeasureSpec, heightMeasureSpec);
+            int measuredWidth = mPrimaryContainer.getMeasuredWidth();
+            int measuredHeight = mPrimaryContainer.getMeasuredHeight();
+            if (isSplitActionBar() && mSecondaryContainer != null) {
+                mSecondaryContainer.measure(widthMeasureSpec, android.view.View.MeasureSpec.makeMeasureSpec(0, 0));
+                measuredHeight += mSecondaryContainer.getMeasuredHeight();
+                if (isExpanded())
+                    setTranslationY(0.0F);
+                else
+                    setTranslationY(mSecondaryContainer.getMeasuredHeight());
+            } else {
                 setTranslationY(0.0F);
-        }
-        while (true) {
-            setMeasuredDimension(j, k);
-            break;
-            setTranslationY(this.mSecondaryContainer.getMeasuredHeight());
-            continue;
-            setTranslationY(0.0F);
+            }
+            setMeasuredDimension(measuredWidth, measuredHeight);
         }
     }
 
-    public void onPageScrolled(int paramInt, float paramFloat, boolean paramBoolean1,
-            boolean paramBoolean2) {
-        setAlpha(computeAlpha(paramFloat, paramBoolean1, paramBoolean2));
-        float f = computeTranslationY(paramFloat, paramBoolean1, paramBoolean2);
-        if ((!paramBoolean1) || (!paramBoolean2)
+    public void onPageScrolled(int position, float ratio, boolean fromHasActionMenu,
+            boolean toHasActionMenu) {
+        setAlpha(computeAlpha(ratio, fromHasActionMenu, toHasActionMenu));
+        float translationY = computeTranslationY(ratio, fromHasActionMenu, toHasActionMenu);
+        if ((!fromHasActionMenu) || (!toHasActionMenu)
                 || (this.mPrimaryContainer.getTranslationY() != 0.0F))
-            this.mPrimaryContainer.setTranslationY(f);
-        this.mOpenCloseAnimator.setTranslationY(f);
+            this.mPrimaryContainer.setTranslationY(translationY);
+        this.mOpenCloseAnimator.setTranslationY(translationY);
     }
 
-    public boolean onTouchEvent(MotionEvent paramMotionEvent) {
-        if (paramMotionEvent.getY() > this.mPrimaryContainer.getPaddingTop() + getTranslationY())
-            ;
-        for (boolean bool = true;; bool = super.onTouchEvent(paramMotionEvent))
-            return bool;
+    public boolean onTouchEvent(MotionEvent ev) {
+        boolean flag;
+        if (ev.getY() > (float) mPrimaryContainer.getPaddingTop() + getTranslationY())
+            flag = true;
+        else
+            flag = super.onTouchEvent(ev);
+        return flag;
     }
 
-    protected void onVisibilityChanged(View paramView, int paramInt) {
-        super.onVisibilityChanged(paramView, paramInt);
-        if (paramView == this)
+    protected void onVisibilityChanged(View changedView, int visibility) {
+        super.onVisibilityChanged(changedView, visibility);
+        if (changedView == this)
             playOpenAnimator();
     }
 
@@ -281,7 +334,7 @@ public class ActionMenuView extends com.android.internal.view.menu.ActionMenuVie
         this.mOpenCloseAnimator.open();
     }
 
-    boolean requestExpand(boolean paramBoolean) {
+    /*boolean requestExpand(boolean paramBoolean) {
         boolean bool = false;
         switch (this.mViewState) {
             case 1:
@@ -317,55 +370,92 @@ public class ActionMenuView extends com.android.internal.view.menu.ActionMenuVie
             else
                 showOrHideMenuPopupWindow(false);
         }
+    }*/
+    boolean requestExpand(boolean expand) {
+        boolean handled = false; // v0
+        // v2 0x1
+        switch (mViewState) {
+            case 0: // pswitch_1
+                if (expand) { // cond_0 in
+                    mViewState = 0x2;
+                    handled = true;
+                    // goto goto_0
+                }
+                break;
+            case 1:
+            case 2:
+                break;
+            case 3: // pswitch_2
+                if (!expand) { // cond_0 in
+                    mViewState = 0x1;
+                    handled = true;
+                    // goto goto_0
+                } // cond_0 after
+                break;
+            default:
+                break;
+        }
+        if (handled) { // cond_1 in
+            if (expand) { // cond_3 in
+                if (isSplitActionBar())
+                    mExpandCollapseAnimator.expand();
+                else
+                    showOrHideMenuPopupWindow(true);
+            } else { // cond_3 after
+                if (mMenuPopupWindow == null)
+                    mExpandCollapseAnimator.collapse();
+                else
+                    showOrHideMenuPopupWindow(false);
+            }
+        } // cond_1 after
+        return handled;
     }
 
-    public void setPrimaryContainerCollapsedBackground(Drawable paramDrawable) {
+    public void setPrimaryContainerCollapsedBackground(Drawable d) {
         if (this.mPrimaryContainer.getBackground() == this.mPrimaryContainerCollapsedBackground) {
             this.mPrimaryContainer.setPadding(0, 0, 0, 0);
-            this.mPrimaryContainer.setBackground(paramDrawable);
+            this.mPrimaryContainer.setBackground(d);
         }
-        this.mPrimaryContainerCollapsedBackground = paramDrawable;
+        this.mPrimaryContainerCollapsedBackground = d;
     }
 
-    public void setPrimaryContainerExpanedBackground(Drawable paramDrawable) {
+    public void setPrimaryContainerExpanedBackground(Drawable d) {
         if (this.mPrimaryContainer.getBackground() == this.mPrimaryContainerExpanedBackground) {
             this.mPrimaryContainer.setPadding(0, 0, 0, 0);
-            this.mPrimaryContainer.setBackground(paramDrawable);
+            this.mPrimaryContainer.setBackground(d);
         }
-        this.mPrimaryContainerExpanedBackground = paramDrawable;
+        this.mPrimaryContainerExpanedBackground = d;
     }
 
-    protected void showOrHideMenuPopupWindow(boolean paramBoolean) {
-        if (paramBoolean) {
-            if (this.mMenuPopupWindow != null) {
-                if (this.mMenuPopupWindow.isShowing())
-                    this.mMenuPopupWindow.dismiss();
-                this.mMenuPopupWindow = null;
+    protected void showOrHideMenuPopupWindow(boolean show) {
+        if (show) {
+            if (mMenuPopupWindow != null) {
+                if (mMenuPopupWindow.isShowing())
+                    mMenuPopupWindow.dismiss();
+                mMenuPopupWindow = null;
             }
-            this.mMenuPopupWindow = new PopupWindow(this.mContext);
-            this.mMenuPopupWindow.setContentView(this.mSecondaryContainer);
-            this.mMenuPopupWindow.setWindowLayoutMode(-2, -1);
-            this.mMenuPopupWindow.setOnDismissListener(this);
-            this.mMenuPopupWindow.setBackgroundDrawable(null);
-            this.mMenuPopupWindow.setAnimationStyle(101515271);
-            this.mMenuPopupWindow.showAsDropDown(this, 0, 0);
-            this.mViewState = 3;
-            this.mMoreIconView.setSelected(true);
+            mMenuPopupWindow = new PopupWindow(mContext);
+            mMenuPopupWindow.setContentView(mSecondaryContainer);
+            mMenuPopupWindow.setWindowLayoutMode(-2, -1);
+            mMenuPopupWindow.setOnDismissListener(this);
+            mMenuPopupWindow.setBackgroundDrawable(null);
+            mMenuPopupWindow.setAnimationStyle(/*0x60d0007*/R.style.V5_Animation_Menu);
+            mMenuPopupWindow.showAsDropDown(this, 0, 0);
+            mViewState = 3;
+            mMoreIconView.setSelected(true);
             ActionBarImpl.getActionBarByView(this).getDimAnimator(false, this)
                     .getDimShowingAnimator().start();
-        }
-        while (true) {
-            return;
-            if (this.mMenuPopupWindow != null) {
-                if (this.mMenuPopupWindow.isShowing())
-                    this.mMenuPopupWindow.dismiss();
-                this.mMenuPopupWindow = null;
+        } else {
+            if (mMenuPopupWindow != null) {
+                if (mMenuPopupWindow.isShowing())
+                    mMenuPopupWindow.dismiss();
+                mMenuPopupWindow = null;
             }
             ActionBarImpl.getActionBarByView(this).getDimAnimator(false, this)
                     .getDimHidingAnimator().start();
         }
     }
-
+    
     public void startPrimaryContainerLayoutAnimation() {
         this.mPrimaryContainer.startLayoutAnimation();
     }
@@ -393,66 +483,65 @@ public class ActionMenuView extends com.android.internal.view.menu.ActionMenuVie
 
         void initialize() {
             if ((this.mExpandAnimator == null) || (this.mCollapseAnimator == null)) {
-                ActionBarImpl.DimAnimator localDimAnimator = ActionBarImpl.getActionBarByView(
+                ActionBarImpl.DimAnimator dimAnimator = ActionBarImpl.getActionBarByView(
                         ActionMenuView.this).getDimAnimator(false, ActionMenuView.this);
-                AnimatorSet localAnimatorSet1 = new AnimatorSet();
-                localAnimatorSet1.play(ObjectAnimator.ofFloat(this, "Value", new float[] {
+                AnimatorSet set = new AnimatorSet();
+                set.play(ObjectAnimator.ofFloat(this, "Value", new float[] {
                         0.0F, 1.0F
-                })).with(localDimAnimator.getDimShowingAnimator());
-                localAnimatorSet1.setDuration(ActionMenuView.this.getResources().getInteger(
-                        17694720));
-                localAnimatorSet1.addListener(this);
-                this.mExpandAnimator = localAnimatorSet1;
-                AnimatorSet localAnimatorSet2 = new AnimatorSet();
-                localAnimatorSet2.play(ObjectAnimator.ofFloat(this, "Value", new float[] {
+                })).with(dimAnimator.getDimShowingAnimator());
+                set.setDuration(ActionMenuView.this.getResources().getInteger(
+                        com.android.internal.R.integer.config_shortAnimTime//0x10e0000
+                        ));
+                set.addListener(this);
+                this.mExpandAnimator = set;
+                AnimatorSet set2 = new AnimatorSet();
+                set2.play(ObjectAnimator.ofFloat(this, "Value", new float[] {
                         0.0F, 1.0F
-                })).with(localDimAnimator.getDimHidingAnimator());
-                localAnimatorSet2.setDuration(ActionMenuView.this.getResources().getInteger(
-                        17694720));
-                localAnimatorSet2.addListener(this);
-                this.mCollapseAnimator = localAnimatorSet2;
+                })).with(dimAnimator.getDimHidingAnimator());
+                set2.setDuration(ActionMenuView.this.getResources().getInteger(
+                        0x10e0000));
+                set2.addListener(this);
+                this.mCollapseAnimator = set2;
             }
         }
 
-        public void onAnimationCancel(Animator paramAnimator) {
+        public void onAnimationCancel(Animator animation) {
         }
 
-        public void onAnimationEnd(Animator paramAnimator) {
-            if (paramAnimator == this.mExpandAnimator)
-                ActionMenuView.access$502(ActionMenuView.this, 3);
-            while (true) {
-                return;
-                if (ActionMenuView.this.mPrimaryContainerExpanedBackground != null)
-                    ActionMenuView.this.mPrimaryContainer
-                            .setBackground(ActionMenuView.this.mPrimaryContainerCollapsedBackground);
-                ActionMenuView.access$502(ActionMenuView.this, 0);
+        public void onAnimationEnd(Animator animator) {
+            if (animator == mExpandAnimator) {
+                //ActionMenuView.access$502(ActionMenuView.this, 3);
+                mViewState = 3;
+            } else {
+                //if (ActionMenuView.access$300(ActionMenuView.this) != null)
+                //    ActionMenuView.access$000(ActionMenuView.this).setBackground(
+                //            ActionMenuView.access$600(ActionMenuView.this));
+                //ActionMenuView.access$502(ActionMenuView.this, 0);
+                if (mPrimaryContainerExpanedBackground != null) {
+                    mPrimaryContainer.setBackground(mPrimaryContainerCollapsedBackground);
+                }
+                mViewState = 0;
             }
         }
 
-        public void onAnimationRepeat(Animator paramAnimator) {
+        public void onAnimationRepeat(Animator animation) {
         }
 
-        public void onAnimationStart(Animator paramAnimator) {
-            if (paramAnimator == this.mExpandAnimator) {
-                if (ActionMenuView.this.mPrimaryContainerExpanedBackground != null)
-                    ActionMenuView.this.mPrimaryContainer
-                            .setBackground(ActionMenuView.this.mPrimaryContainerExpanedBackground);
-                ActionMenuView.this.mMoreIconView.setSelected(true);
-            }
-            while (true) {
-                return;
-                ActionMenuView.this.mMoreIconView.setSelected(false);
+        public void onAnimationStart(Animator animation) {
+            if (animation == this.mExpandAnimator) {
+                if (mPrimaryContainerExpanedBackground != null)
+                    mPrimaryContainer.setBackground(mPrimaryContainerExpanedBackground);
+                mMoreIconView.setSelected(true);
+            } else {
+                mMoreIconView.setSelected(false);
             }
         }
 
-        public void setValue(float paramFloat) {
-            if (this.mExpandAnimator.isRunning())
-                ActionMenuView.this.setTranslationY(ActionMenuView.this.mSecondaryContainer
-                        .getMeasuredHeight() * (1.0F - paramFloat));
-            while (true) {
-                return;
-                ActionMenuView.this.setTranslationY(paramFloat
-                        * ActionMenuView.this.mSecondaryContainer.getMeasuredHeight());
+        public void setValue(float value) {
+            if (mExpandAnimator.isRunning()) {
+                setTranslationY(mSecondaryContainer.getMeasuredHeight() * (1.0F - value));
+            } else {
+                setTranslationY(value * mSecondaryContainer.getMeasuredHeight());
             }
         }
     }
@@ -485,23 +574,24 @@ public class ActionMenuView extends com.android.internal.view.menu.ActionMenuVie
                 arrayOfFloat[0] = ActionMenuView.this.mPrimaryContainerHeight;
                 this.mCloseAnimator = ObjectAnimator.ofFloat(this, "TranslationY", arrayOfFloat);
                 this.mCloseAnimator.setDuration(ActionMenuView.this.getResources().getInteger(
-                        17694720));
+                        com.android.internal.R.integer.config_shortAnimTime// 0x10e0000
+                        ));
                 this.mCloseAnimator.addListener(this);
             }
         }
 
-        public void onAnimationCancel(Animator paramAnimator) {
+        public void onAnimationCancel(Animator animation) {
         }
 
-        public void onAnimationEnd(Animator paramAnimator) {
+        public void onAnimationEnd(Animator animation) {
             this.mCurrentAnimator = null;
         }
 
         public void onAnimationRepeat(Animator paramAnimator) {
         }
 
-        public void onAnimationStart(Animator paramAnimator) {
-            this.mCurrentAnimator = paramAnimator;
+        public void onAnimationStart(Animator animation) {
+            this.mCurrentAnimator = animation;
         }
 
         void open() {
@@ -513,9 +603,9 @@ public class ActionMenuView extends com.android.internal.view.menu.ActionMenuVie
             ActionMenuView.this.mPrimaryContainer.startLayoutAnimation();
         }
 
-        public void setTranslationY(float paramFloat) {
-            for (int i = 0; i < ActionMenuView.this.mPrimaryContainer.getChildCount(); i++)
-                ActionMenuView.this.mPrimaryContainer.getChildAt(i).setTranslationY(paramFloat);
+        public void setTranslationY(float y) {
+            for (int i = 0; i < mPrimaryContainer.getChildCount(); i++)
+                mPrimaryContainer.getChildAt(i).setTranslationY(y);
         }
     }
 }

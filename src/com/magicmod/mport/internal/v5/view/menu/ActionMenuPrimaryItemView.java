@@ -4,5 +4,5 @@ import com.android.internal.view.menu.MenuBuilder;
 import com.android.internal.view.menu.MenuView.ItemView;
 
 public abstract interface ActionMenuPrimaryItemView extends ItemView{
-    public abstract void setItemInvoker(MenuBuilder.ItemInvoker paramItemInvoker);
+    public abstract void setItemInvoker(MenuBuilder.ItemInvoker itemInvoker);
 }

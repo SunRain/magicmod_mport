@@ -15,28 +15,27 @@ public class ActionMenuSecondaryItemView extends TextView implements MenuView.It
     private MenuItemImpl mItemData;
     private MenuBuilder.ItemInvoker mItemInvoker;
 
-    public ActionMenuSecondaryItemView(Context paramContext) {
-        super(paramContext);
+    public ActionMenuSecondaryItemView(Context context) {
+        super(context);
     }
 
-    public ActionMenuSecondaryItemView(Context paramContext, AttributeSet paramAttributeSet) {
-        super(paramContext, paramAttributeSet);
+    public ActionMenuSecondaryItemView(Context context, AttributeSet attrs) {
+        super(context, attrs);
     }
 
-    public ActionMenuSecondaryItemView(Context paramContext, AttributeSet paramAttributeSet,
-            int paramInt) {
-        super(paramContext, paramAttributeSet, paramInt);
+    public ActionMenuSecondaryItemView(Context context, AttributeSet attrs, int defStyle) {
+        super(context, attrs, defStyle);
     }
 
     public MenuItemImpl getItemData() {
         return this.mItemData;
     }
 
-    public void initialize(MenuItemImpl paramMenuItemImpl, int paramInt) {
-        this.mItemData = paramMenuItemImpl;
-        setTitle(paramMenuItemImpl.getTitle());
-        setIcon(paramMenuItemImpl.getIcon());
-        setEnabled(paramMenuItemImpl.isEnabled());
+    public void initialize(MenuItemImpl itemData, int menuType) {
+        this.mItemData = itemData;
+        setTitle(itemData.getTitle());
+        setIcon(itemData.getIcon());
+        setEnabled(itemData.isEnabled());
     }
 
     public boolean performClick() {
@@ -50,38 +49,40 @@ public class ActionMenuSecondaryItemView extends TextView implements MenuView.It
         //    else
         //        bool = false;
         //}
-        super.performClick();
-        if ((mItemInvoker != null) && mItemInvoker.invokeItem(mItemData)) {
-            playSoundEffect(0);
-            return true;
-        } else {
-            return false;
+        if (!super.performClick()) {
+            if ((mItemInvoker != null) && mItemInvoker.invokeItem(mItemData)) {
+                playSoundEffect(0);
+                return true;
+            } else {
+                return false;
+            }
         }
+        return true;
     }
 
     public boolean prefersCondensedTitle() {
         return false;
     }
 
-    public void setCheckable(boolean paramBoolean) {
+    public void setCheckable(boolean checkable) {
     }
 
-    public void setChecked(boolean paramBoolean) {
+    public void setChecked(boolean checked) {
     }
 
-    public void setIcon(Drawable paramDrawable) {
+    public void setIcon(Drawable icon) {
     }
 
-    public void setItemInvoker(MenuBuilder.ItemInvoker paramItemInvoker) {
-        this.mItemInvoker = paramItemInvoker;
+    public void setItemInvoker(MenuBuilder.ItemInvoker itemInvoker) {
+        this.mItemInvoker = itemInvoker;
     }
 
-    public void setShortcut(boolean paramBoolean, char paramChar) {
+    public void setShortcut(boolean showShortcut, char shortcutKey) {
     }
 
-    public void setTitle(CharSequence paramCharSequence) {
-        if (!TextUtils.equals(getText(), paramCharSequence))
-            setText(paramCharSequence);
+    public void setTitle(CharSequence title) {
+        if (!TextUtils.equals(getText(), title))
+            setText(title);
     }
 
     public boolean showsIcon() {
