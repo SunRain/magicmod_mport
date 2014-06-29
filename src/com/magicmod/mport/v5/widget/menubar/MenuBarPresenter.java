@@ -38,10 +38,10 @@ public abstract interface MenuBarPresenter {
     public abstract void updateMenuView(boolean paramBoolean);
 
     public static abstract interface Callback {
-        public abstract void onCloseMenu(MenuBar paramMenuBar, boolean paramBoolean);
+        public abstract void onCloseMenu(MenuBar menu, boolean allMenusAreClosing);
 
-        public abstract void onOpenMenu(MenuBar paramMenuBar, boolean paramBoolean);
+        public abstract void onOpenMenu(MenuBar menu, boolean allMenusAreClosing);
 
-        public abstract boolean onOpenSubMenu(MenuBar paramMenuBar);
+        public abstract boolean onOpenSubMenu(MenuBar subMenu);
     }
 }

@@ -69,7 +69,7 @@ public class MiuiActionMode extends ActionMode {
         if (this.mCallback != null)
             finish();
         this.mActive = true;
-        this.mCallback = paramCallback;
+        this.mCallback = callback;
         if (this.mActionModeListener != null)
             this.mActionModeListener.onActionModeStarted(this);
     }

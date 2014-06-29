@@ -2,7 +2,28 @@
 package com.magicmod.mport.v5.view;
 
 import android.content.Context;
+import android.graphics.drawable.Drawable;
+import android.view.ActionMode;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.TextView;
+
+import com.android.internal.R.color;
+import com.magicmod.mport.util.UiUtils;
+import com.magicmod.mport.v5.widget.Views;
+import com.magicmod.mport.v5.widget.menubar.IconMenuBarPresenter;
+import com.magicmod.mport.v5.widget.menubar.IconMenuBarView;
+import com.magicmod.mport.v5.widget.menubar.MenuBar;
+import com.magicmod.mport.v5.widget.menubar.MenuBarItem;
+import com.miui.internal.R;
+
+import java.lang.ref.WeakReference;
 
 public class EditableActionMode extends MiuiActionMode implements MenuBar.Callback,
         EditModeTitleBar {
@@ -13,36 +34,39 @@ public class EditableActionMode extends MiuiActionMode implements MenuBar.Callba
     final MenuBar mMenuBar;
     private final TitleBarImpl mTitleBar;
 
-    EditableActionMode(Context paramContext, ViewGroup paramViewGroup1, ViewGroup paramViewGroup2) {
-        this.mContext = paramContext;
-        this.mMenuBar = new MenuBar(this.mContext);
+    EditableActionMode(Context context, ViewGroup topContainer, ViewGroup bottomContainer) {
+        this.mContext = context;
+        this.mMenuBar = new MenuBar(mContext);
         this.mMenuBar.setCallback(this);
-        this.mIconMenuBarPresenter = new IconMenuBarPresenter(this.mContext, paramViewGroup2,
-                100859945, 100859946, 100859947);
+        this.mIconMenuBarPresenter = new IconMenuBarPresenter(mContext, bottomContainer,
+                R.layout.v5_edit_mode_icon_menu_bar, // 0x6030029,
+                R.layout.v5_edit_mode_icon_menu_bar_primary_item, // 0x603002a,
+                R.layout.v5_edit_mode_icon_menu_bar_secondary_item // 0x603002b
+        );
         this.mIconMenuBarPresenter.setMoreIconDrawable(UiUtils
-                .getDrawable(this.mContext, 100728933));
+                .getDrawable(mContext, /*0x6010065*/R.attr.v5_edit_mode_bottom_bar_more_icon));
         this.mIconMenuBarPresenter.setEditMode(true);
-        this.mMenuBar.addMenuPresenter(this.mIconMenuBarPresenter);
-        this.mIconMenuBarView = ((IconMenuBarView) this.mIconMenuBarPresenter
-                .getMenuView(paramViewGroup2));
-        this.mTitleBar = new TitleBarImpl(paramViewGroup1, this);
+        this.mMenuBar.addMenuPresenter(mIconMenuBarPresenter);
+        this.mIconMenuBarView = ((IconMenuBarView) mIconMenuBarPresenter
+                .getMenuView(bottomContainer));
+        this.mTitleBar = new TitleBarImpl(topContainer, this);
     }
 
     public void finish() {
-        if (this.mCallback != null)
-            this.mCallback.onDestroyActionMode(this);
+        if (mCallback != null)
+            mCallback.onDestroyActionMode(this);
         this.mTitleBar.detach();
         this.mIconMenuBarView.getPrimaryContainer().startAnimation(
-                AnimationUtils.loadAnimation(this.mContext, 100925458));
+                AnimationUtils.loadAnimation(mContext, /*0x6040012*/R.anim.v5_edit_mode_bottom_out));
         super.finish();
     }
 
-    public CharSequence getButtonText(int paramInt) {
-        return this.mTitleBar.getButtonText(paramInt);
+    public CharSequence getButtonText(int id) {
+        return this.mTitleBar.getButtonText(id);
     }
 
-    public int getButtonVisiblity(int paramInt) {
-        return this.mTitleBar.getButtonVisiblity(paramInt);
+    public int getButtonVisiblity(int id) {
+        return this.mTitleBar.getButtonVisiblity(id);
     }
 
     public Menu getMenu() {
@@ -50,7 +74,7 @@ public class EditableActionMode extends MiuiActionMode implements MenuBar.Callba
     }
 
     public MenuInflater getMenuInflater() {
-        return new MenuInflater(this.mContext);
+        return new MenuInflater(mContext);
     }
 
     public CharSequence getTitle() {
@@ -58,247 +82,277 @@ public class EditableActionMode extends MiuiActionMode implements MenuBar.Callba
     }
 
     public void invalidate() {
-        if (this.mCallback == null)
-            this.mMenuBar.clear();
+        /*if (mCallback == null)
+            mMenuBar.clear();
         while (true) {
             return;
             this.mMenuBar.stopDispatchingItemsChanged();
             try {
-                this.mCallback.onPrepareActionMode(this, this.mMenuBar);
+                mCallback.onPrepareActionMode(this, this.mMenuBar);
                 this.mMenuBar.startDispatchingItemsChanged();
             } finally {
                 this.mMenuBar.startDispatchingItemsChanged();
             }
+        }*/
+        /*if (mCallback != null) {
+            mMenuBar.stopDispatchingItemsChanged();
+            try {
+                mCallback.onPrepareActionMode(this, mMenuBar);
+            } catch (Exception e) {
+                mMenuBar.startDispatchingItemsChanged();
+            }
+            mMenuBar.startDispatchingItemsChanged();
+        } else {
+            mMenuBar.clear();
+        }*/
+        if (mCallback == null) {
+            mMenuBar.clear();
         }
+        mMenuBar.stopDispatchingItemsChanged();
+        try {
+            mCallback.onPrepareActionMode(this, mMenuBar);
+        } catch (Exception e) {
+            mMenuBar.startDispatchingItemsChanged();
+        }
+        mMenuBar.startDispatchingItemsChanged();
     }
 
-    public boolean onCreateMenuBarPanel(Menu paramMenu) {
+    @Override
+    public boolean onCreateMenuBarPanel(Menu menu) {
         return true;
     }
 
-    public void onMenuBarPanelClose(Menu paramMenu) {
+    @Override
+    public void onMenuBarPanelClose(Menu menu) {
         this.mMenuBar.setCallback(null);
         this.mMenuBar.removeMenuPresenter(this.mIconMenuBarPresenter);
         ((ViewGroup) this.mIconMenuBarView.getParent()).removeView(this.mIconMenuBarView);
     }
 
-    public boolean onMenuBarPanelItemSelected(Menu paramMenu, MenuItem paramMenuItem) {
-        if (this.mCallback != null)
-            ;
-        for (boolean bool = this.mCallback.onActionItemClicked(this, paramMenuItem);; bool = false)
-            return bool;
+    @Override
+    public boolean onMenuBarPanelItemSelected(Menu menu, MenuItem item) {
+        if (mCallback != null)
+            return mCallback.onActionItemClicked(this, item);
+        else
+            return false;
     }
 
-    public void onMenuBarPanelModeChange(Menu paramMenu, int paramInt) {
+    @Override
+    public void onMenuBarPanelModeChange(Menu menu, int mode) {
     }
 
-    public void onMenuBarPanelOpen(Menu paramMenu) {
+    @Override
+    public void onMenuBarPanelOpen(Menu menu) {
     }
 
-    public boolean onPrepareMenuBarPanel(Menu paramMenu) {
+    @Override
+    public boolean onPrepareMenuBarPanel(Menu menu) {
         return true;
     }
 
-    public void setBackground(int paramInt) {
-        this.mTitleBar.setBackground(paramInt);
+    public void setBackground(int resId) {
+        this.mTitleBar.setBackground(resId);
     }
 
-    public void setBackground(Drawable paramDrawable) {
-        this.mTitleBar.setBackground(paramDrawable);
+    @Override
+    public void setBackground(Drawable d) {
+        this.mTitleBar.setBackground(d);
     }
 
-    public void setButtonBackground(int paramInt1, int paramInt2) {
-        this.mTitleBar.setButtonBackground(paramInt1, paramInt2);
+    public void setButtonBackground(int id, int resId) {
+        this.mTitleBar.setButtonBackground(id, resId);
     }
 
-    public void setButtonBackground(int paramInt, Drawable paramDrawable) {
-        this.mTitleBar.setButtonBackground(paramInt, paramDrawable);
+    @Override
+    public void setButtonBackground(int id, Drawable d) {
+        this.mTitleBar.setButtonBackground(id, d);
     }
 
-    public void setButtonText(int paramInt1, int paramInt2) {
-        this.mTitleBar.setButtonText(paramInt1, paramInt2);
+    public void setButtonText(int id, int text) {
+        this.mTitleBar.setButtonText(id, text);
     }
 
-    public void setButtonText(int paramInt, CharSequence paramCharSequence) {
-        this.mTitleBar.setButtonText(paramInt, paramCharSequence);
+    public void setButtonText(int id, CharSequence text) {
+        this.mTitleBar.setButtonText(id, text);
     }
 
-    public void setButtonVisibility(int paramInt1, int paramInt2) {
-        this.mTitleBar.setButtonVisibility(paramInt1, paramInt2);
+    public void setButtonVisibility(int id, int visibility) {
+        this.mTitleBar.setButtonVisibility(id, visibility);
     }
 
-    public void setTitle(int paramInt) {
-        this.mTitleBar.setTitle(paramInt);
+    public void setTitle(int resId) {
+        this.mTitleBar.setTitle(resId);
     }
 
-    public void setTitle(CharSequence paramCharSequence) {
-        this.mTitleBar.setTitle(paramCharSequence);
+    public void setTitle(CharSequence title) {
+        this.mTitleBar.setTitle(title);
     }
 
-    public void start(ActionMode.Callback paramCallback) {
-        super.start(paramCallback);
-        this.mMenuBar.reopen();
-        this.mTitleBar.attach();
-        if (this.mCallback != null)
-            this.mMenuBar.stopDispatchingItemsChanged();
-        try {
-            this.mCallback.onCreateActionMode(this, this.mMenuBar);
-            this.mMenuBar.startDispatchingItemsChanged();
-            invalidate();
-            this.mIconMenuBarView.getPrimaryContainer().startAnimation(
-                    AnimationUtils.loadAnimation(this.mContext, 100925457));
-            return;
-        } finally {
-            this.mMenuBar.startDispatchingItemsChanged();
+    public void start(ActionMode.Callback callback) {
+        super.start(callback);
+        mMenuBar.reopen();
+        mTitleBar.attach();
+        if (mCallback != null) {
+            mMenuBar.stopDispatchingItemsChanged();
+            try {
+                mCallback.onCreateActionMode(this, this.mMenuBar);
+            } catch (Exception e) {
+                mMenuBar.startDispatchingItemsChanged();
+            }
+            mMenuBar.startDispatchingItemsChanged();
         }
+        invalidate();
+        mIconMenuBarView.getPrimaryContainer().startAnimation(
+                AnimationUtils.loadAnimation(this.mContext, /*0x6040011*/R.anim.v5_edit_mode_bottom_in));
     }
 
     public boolean tryToFinish() {
-        boolean bool = false;
-        if (this.mMenuBar.expand(false))
-            ;
-        while (true) {
-            return bool;
-            bool = super.tryToFinish();
-        }
+        boolean flag = false;
+        if (!mMenuBar.expand(false))
+            flag = super.tryToFinish();
+        return flag;
     }
 
-    private static class TitleBarImpl implements EditModeTitleBar, View.OnClickListener {
+    private static class TitleBarImpl implements EditModeTitleBar, OnClickListener {
         private final MenuItem[] mActionItems = new MenuItem[2];
         private final WeakReference<EditableActionMode> mActionModeRef;
         private final TextView[] mActionViews = new TextView[2];
         final ViewGroup mContainer;
         private final Context mContext;
+        
         private final Animation.AnimationListener mDetachListener = new Animation.AnimationListener() {
-            public void onAnimationEnd(Animation paramAnonymousAnimation) {
-                EditableActionMode localEditableActionMode = (EditableActionMode) EditableActionMode.TitleBarImpl.this.mActionModeRef
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                EditableActionMode mode = (EditableActionMode) EditableActionMode.TitleBarImpl.this.mActionModeRef
                         .get();
-                if (localEditableActionMode != null)
-                    localEditableActionMode.mMenuBar.close();
+                if (mode != null)
+                    mode.mMenuBar.close();
                 Views.detach(EditableActionMode.TitleBarImpl.this.mContainer);
             }
 
-            public void onAnimationRepeat(Animation paramAnonymousAnimation) {
+            @Override
+            public void onAnimationRepeat(Animation animation) {
             }
 
-            public void onAnimationStart(Animation paramAnonymousAnimation) {
+            @Override
+            public void onAnimationStart(Animation animation) {
             }
         };
+        
         final ViewGroup mParent;
         private final TextView mTitleView;
 
-        public TitleBarImpl(ViewGroup paramViewGroup, EditableActionMode paramEditableActionMode) {
-            this.mActionModeRef = new WeakReference(paramEditableActionMode);
-            this.mParent = paramViewGroup;
-            this.mContext = paramViewGroup.getContext();
-            ViewGroup localViewGroup = (ViewGroup) Views.inflate(this.mContext, 100859948,
-                    paramViewGroup, false);
-            this.mContainer = localViewGroup;
-            this.mTitleView = ((TextView) localViewGroup.findViewById(16908310));
-            this.mActionViews[0] = ((TextView) localViewGroup.findViewById(16908313));
+        public TitleBarImpl(ViewGroup parent, EditableActionMode mode) {
+            this.mActionModeRef = new WeakReference<EditableActionMode>(mode);
+            this.mParent = parent;
+            this.mContext = parent.getContext();
+            ViewGroup container = (ViewGroup) Views.inflate(mContext,
+                    R.layout.v5_edit_mode_title_bar, // 0x603002c,
+                    parent, false);
+            this.mContainer = container;
+            this.mTitleView = ((TextView) container
+                    .findViewById(/* 0x1020016 */com.android.internal.R.id.title));
+            this.mActionViews[0] = ((TextView) container
+                    .findViewById(/* 0x1020019 */com.android.internal.R.id.button1));
             this.mActionViews[0].setOnClickListener(this);
-            this.mActionViews[1] = ((TextView) localViewGroup.findViewById(16908314));
+            this.mActionViews[1] = ((TextView) container
+                    .findViewById(/* 0x102001a */com.android.internal.R.id.button2));
             this.mActionViews[1].setOnClickListener(this);
-            this.mActionItems[0] = new MenuBarItem(paramEditableActionMode.mMenuBar,
-                    this.mActionViews[0].getId(), 0, this.mContext.getString(17039360));
-            this.mActionItems[1] = new MenuBarItem(paramEditableActionMode.mMenuBar,
-                    this.mActionViews[1].getId(), 0, this.mContext.getString(101450237));
+            this.mActionItems[0] = new MenuBarItem(mode.mMenuBar, this.mActionViews[0].getId(), 0,
+                    this.mContext.getString(/* 0x1040000 */com.android.internal.R.string.cancel));
+            this.mActionItems[1] = new MenuBarItem(mode.mMenuBar, this.mActionViews[1].getId(), 0,
+                    this.mContext.getString(/* 0x60c01fd */R.string.v5_select_all));
         }
 
-        private TextView getActionView(int paramInt) {
-            if (paramInt == this.mActionViews[0].getId())
-                ;
-            for (TextView localTextView = this.mActionViews[0];; localTextView = this.mActionViews[1]) {
-                return localTextView;
-                if (paramInt != this.mActionViews[1].getId())
-                    break;
-            }
-            throw new IllegalArgumentException("No ActionView for id=" + paramInt);
+        private TextView getActionView(int id) {
+            TextView textview;
+            if (id == mActionViews[0].getId())
+                textview = mActionViews[0];
+            else if (id == mActionViews[1].getId())
+                textview = mActionViews[1];
+            else
+                throw new IllegalArgumentException((new StringBuilder())
+                        .append("No ActionView for id=").append(id).toString());
+            return textview;
         }
 
         public void attach() {
-            if (this.mContainer.getParent() == null) {
-                this.mParent.addView(this.mContainer);
-                this.mContainer.startAnimation(AnimationUtils.loadAnimation(this.mContext,
-                        100925459));
+            if (mContainer.getParent() == null) {
+                mParent.addView(mContainer);
+                mContainer.startAnimation(AnimationUtils.loadAnimation(mContext, /*0x6040013*/R.anim.v5_edit_mode_top_in));
             }
         }
 
         public void detach() {
-            Animation localAnimation = AnimationUtils.loadAnimation(this.mContext, 100925460);
-            localAnimation.setAnimationListener(this.mDetachListener);
-            this.mContainer.startAnimation(localAnimation);
+            Animation anim = AnimationUtils.loadAnimation(this.mContext, /*0x6040014*/R.anim.v5_edit_mode_top_out);
+            anim.setAnimationListener(this.mDetachListener);
+            this.mContainer.startAnimation(anim);
         }
 
-        public CharSequence getButtonText(int paramInt) {
-            return getActionView(paramInt).getText();
+        public CharSequence getButtonText(int id) {
+            return getActionView(id).getText();
         }
 
-        public int getButtonVisiblity(int paramInt) {
-            return getActionView(paramInt).getVisibility();
+        public int getButtonVisiblity(int id) {
+            return getActionView(id).getVisibility();
         }
 
         public CharSequence getTitle() {
             return this.mTitleView.getText();
         }
 
-        public void onClick(View paramView) {
-            EditableActionMode localEditableActionMode = (EditableActionMode) this.mActionModeRef
-                    .get();
-            if (localEditableActionMode == null)
-                ;
-            while (true) {
-                return;
-                if (paramView == this.mActionViews[0]) {
-                    MenuItem localMenuItem2 = this.mActionItems[0];
-                    localMenuItem2.setTitle(this.mActionViews[0].getText());
-                    if (localEditableActionMode.mCallback != null)
-                        localEditableActionMode.mCallback.onActionItemClicked(
-                                localEditableActionMode, localMenuItem2);
-                } else if (paramView == this.mActionViews[1]) {
-                    MenuItem localMenuItem1 = this.mActionItems[1];
-                    localMenuItem1.setTitle(this.mActionViews[1].getText());
-                    if (localEditableActionMode.mCallback != null)
-                        localEditableActionMode.mCallback.onActionItemClicked(
-                                localEditableActionMode, localMenuItem1);
+        @Override
+        public void onClick(View v) {
+            EditableActionMode mode = (EditableActionMode) mActionModeRef.get();
+            if (mode != null) {
+                if (v == mActionViews[0]) {
+                    MenuItem item = mActionItems[0];
+                    item.setTitle(mActionViews[0].getText());
+                    if (((MiuiActionMode) (mode)).mCallback != null)
+                        ((MiuiActionMode) (mode)).mCallback.onActionItemClicked(mode, item);
+                } else if (v == mActionViews[1]) {
+                    MenuItem item = mActionItems[1];
+                    item.setTitle(mActionViews[1].getText());
+                    if (((MiuiActionMode) (mode)).mCallback != null)
+                        ((MiuiActionMode) (mode)).mCallback.onActionItemClicked(mode, item);
                 }
             }
         }
 
-        public void setBackground(int paramInt) {
-            this.mContainer.setBackgroundResource(paramInt);
+        public void setBackground(int resId) {
+            this.mContainer.setBackgroundResource(resId);
         }
 
-        public void setBackground(Drawable paramDrawable) {
-            this.mContainer.setBackground(paramDrawable);
+        public void setBackground(Drawable d) {
+            this.mContainer.setBackground(d);
         }
 
-        public void setButtonBackground(int paramInt1, int paramInt2) {
-            getActionView(paramInt1).setBackgroundResource(paramInt2);
+        public void setButtonBackground(int id, int resId) {
+            getActionView(id).setBackgroundResource(resId);
         }
 
-        public void setButtonBackground(int paramInt, Drawable paramDrawable) {
-            getActionView(paramInt).setBackground(paramDrawable);
+        public void setButtonBackground(int id, Drawable d) {
+            getActionView(id).setBackground(d);
         }
 
-        public void setButtonText(int paramInt1, int paramInt2) {
-            getActionView(paramInt1).setText(paramInt2);
+        public void setButtonText(int id, int text) {
+            getActionView(id).setText(text);
         }
 
-        public void setButtonText(int paramInt, CharSequence paramCharSequence) {
-            getActionView(paramInt).setText(paramCharSequence);
+        public void setButtonText(int id, CharSequence text) {
+            getActionView(id).setText(text);
         }
 
-        public void setButtonVisibility(int paramInt1, int paramInt2) {
-            getActionView(paramInt1).setVisibility(paramInt2);
+        public void setButtonVisibility(int id, int visibility) {
+            getActionView(id).setVisibility(visibility);
         }
 
-        public void setTitle(int paramInt) {
-            this.mTitleView.setText(paramInt);
+        public void setTitle(int text) {
+            this.mTitleView.setText(text);
         }
 
-        public void setTitle(CharSequence paramCharSequence) {
-            this.mTitleView.setText(paramCharSequence);
+        public void setTitle(CharSequence text) {
+            this.mTitleView.setText(text);
         }
     }
 }

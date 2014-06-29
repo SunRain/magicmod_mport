@@ -320,7 +320,7 @@ public abstract class AbsTranslationController implements MotionDetectListener, 
         public TranslateAnimationListener(View view, int fromi, int delta, boolean springBack)
         {
             super();
-            mViewRef = new WeakReference(view);
+            mViewRef = new WeakReference<View>(view);
             mFrom = fromi;
             mDelta = delta;
             mSpringBack = springBack;

@@ -21,10 +21,10 @@ public class DefaultActionMode extends ActionMode implements MenuBuilder.Callbac
     private boolean mFinished;
     private MenuBuilder mMenu;
 
-    public DefaultActionMode(Context paramContext, ActionMode.Callback paramCallback) {
-        this.mContext = paramContext;
-        this.mCallback = paramCallback;
-        this.mMenu = new MenuBuilder(paramContext).setDefaultShowAsAction(1);
+    public DefaultActionMode(Context context, ActionMode.Callback callback) {
+        this.mContext = context;
+        this.mCallback = callback;
+        this.mMenu = new MenuBuilder(context).setDefaultShowAsAction(1);
         this.mMenu.setCallback(this);
     }
 
@@ -45,7 +45,7 @@ public class DefaultActionMode extends ActionMode implements MenuBuilder.Callbac
                 mCallback.onDestroyActionMode(this);
                 mCallback = null;
             }
-            if (this.mActionModeCallback != null) {
+            if (mActionModeCallback != null) {
                 mActionModeCallback.onActionModeFinish(this);
             }
             mFinished = true;
@@ -76,24 +76,24 @@ public class DefaultActionMode extends ActionMode implements MenuBuilder.Callbac
         this.mMenu.stopDispatchingItemsChanged();
         try {
             this.mCallback.onPrepareActionMode(this, this.mMenu);
-            return;
+            //return;
         } finally {
             this.mMenu.startDispatchingItemsChanged();
         }
     }
 
-    public boolean onMenuItemSelected(MenuBuilder paramMenuBuilder, MenuItem paramMenuItem) {
+    public boolean onMenuItemSelected(MenuBuilder menu, MenuItem item) {
         //if (this.mCallback != null)
         //    ;
         //for (boolean bool = this.mCallback.onActionItemClicked(this, paramMenuItem);; bool = false)
         //    return bool;
         if (this.mCallback != null) {
-            return this.mCallback.onActionItemClicked(this, paramMenuItem);
+            return this.mCallback.onActionItemClicked(this, item);
         }
         return false;
     }
 
-    public void onMenuModeChange(MenuBuilder paramMenuBuilder) {
+    public void onMenuModeChange(MenuBuilder menu) {
         //if (this.mCallback == null)
         //    ;
         //while (true) {
@@ -105,32 +105,32 @@ public class DefaultActionMode extends ActionMode implements MenuBuilder.Callbac
         }
     }
 
-    public void setActionModeCallback(ActionModeCallback paramActionModeCallback) {
-        this.mActionModeCallback = paramActionModeCallback;
+    public void setActionModeCallback(ActionModeCallback callback) {
+        this.mActionModeCallback = callback;
     }
 
-    public void setActionModeView(ActionModeView paramActionModeView) {
-        this.mActionModeView = new WeakReference(paramActionModeView);
-        paramActionModeView.initForMode(this);
+    public void setActionModeView(ActionModeView presenter) {
+        this.mActionModeView = new WeakReference<ActionModeView>(presenter);
+        presenter.initForMode(this);
     }
 
-    public void setCustomView(View paramView) {
+    public void setCustomView(View view) {
         throw new UnsupportedOperationException("setCustomView not supported");
     }
 
-    public void setSubtitle(int paramInt) {
+    public void setSubtitle(int resId) {
         throw new UnsupportedOperationException("setSubTitle not supported");
     }
 
-    public void setSubtitle(CharSequence paramCharSequence) {
+    public void setSubtitle(CharSequence subtitle) {
         throw new UnsupportedOperationException("setSubTitle not supported");
     }
 
-    public void setTitle(int paramInt) {
+    public void setTitle(int resId) {
         throw new UnsupportedOperationException("setTitle not supported");
     }
 
-    public void setTitle(CharSequence paramCharSequence) {
+    public void setTitle(CharSequence title) {
         throw new UnsupportedOperationException("setTitle not supported");
     }
 

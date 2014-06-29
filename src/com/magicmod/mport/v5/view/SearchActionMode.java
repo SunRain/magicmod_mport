@@ -6,6 +6,7 @@ import android.view.View;
 import android.widget.EditText;
 
 import com.magicmod.mport.internal.v5.widget.SearchActionModeView;
+import com.magicmod.mport.v5.widget.SearchModeAnimationListener;
 
 public class SearchActionMode extends DefaultActionMode {
     public SearchActionMode(Context context, Callback callback) {

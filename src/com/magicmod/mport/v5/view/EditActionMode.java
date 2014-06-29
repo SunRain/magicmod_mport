@@ -5,38 +5,39 @@ import android.content.Context;
 import android.view.ActionMode;
 import android.view.View;
 
+import com.android.internal.R;
 import com.magicmod.mport.internal.v5.widget.ActionBarContextView;
 
 public class EditActionMode extends DefaultActionMode {
-    // public static final int BUTTON1 = 16908313;
-    // public static final int BUTTON2 = 16908314;
+    public static final int BUTTON1 = R.id.button1;//0x1020019;
+    public static final int BUTTON2 = R.id.button2;//0x102001a;
 
-    public EditActionMode(Context paramContext, ActionMode.Callback paramCallback) {
-        super(paramContext, paramCallback);
+    public EditActionMode(Context context, ActionMode.Callback callback) {
+        super(context, callback);
     }
 
-    public void setButton(int paramInt1, int paramInt2) {
-        setButton(paramInt1, mContext.getResources().getString(paramInt2));
+    public void setButton(int whichButton, int resId) {
+        setButton(whichButton, mContext.getResources().getString(resId));
     }
 
-    public void setButton(int paramInt, CharSequence paramCharSequence) {
-        ((ActionBarContextView) mActionModeView.get()).setButton(paramInt, paramCharSequence);
+    public void setButton(int whichButton, CharSequence text) {
+        ((ActionBarContextView) mActionModeView.get()).setButton(whichButton, text);
     }
 
-    public void setCustomView(View paramView) {
+    public void setCustomView(View view) {
     }
 
-    public void setSubtitle(int paramInt) {
+    public void setSubtitle(int resId) {
     }
 
-    public void setSubtitle(CharSequence paramCharSequence) {
+    public void setSubtitle(CharSequence subtitle) {
     }
 
-    public void setTitle(int paramInt) {
-        setTitle(this.mContext.getResources().getString(paramInt));
+    public void setTitle(int resId) {
+        setTitle(this.mContext.getResources().getString(resId));
     }
 
-    public void setTitle(CharSequence paramCharSequence) {
-        ((ActionBarContextView) this.mActionModeView.get()).setTitle(paramCharSequence);
+    public void setTitle(CharSequence title) {
+        ((ActionBarContextView) this.mActionModeView.get()).setTitle(title);
     }
 }

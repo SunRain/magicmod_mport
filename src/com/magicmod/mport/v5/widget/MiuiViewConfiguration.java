@@ -1,7 +1,6 @@
 
 package com.magicmod.mport.v5.widget;
 
-import android.R.raw;
 import android.content.Context;
 import android.content.res.Resources;
 import android.util.SparseArray;
@@ -9,7 +8,7 @@ import android.util.SparseArray;
 import com.miui.internal.R;
 
 public class MiuiViewConfiguration {
-    static final SparseArray<MiuiViewConfiguration> sConfigurations = new SparseArray(2);
+    static final SparseArray<MiuiViewConfiguration> sConfigurations = new SparseArray<MiuiViewConfiguration>(2);
     private final int mFloatingViewOverDistance;
     private final int mFloatingViewTopHiddenSize;
     private final int mMaxAnchorDuration;

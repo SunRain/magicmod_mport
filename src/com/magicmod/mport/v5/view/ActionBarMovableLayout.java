@@ -1,7 +1,6 @@
 
 package com.magicmod.mport.v5.view;
 
-import android.R.bool;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.util.AttributeSet;
@@ -11,13 +10,12 @@ import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
-import android.view.ViewGroup.LayoutParams;
-import android.view.ViewGroup.MarginLayoutParams;
 import android.view.ViewParent;
-import android.widget.Button;
 import android.widget.OverScroller;
 
+import com.magicmod.mport.internal.v5.widget.ActionBarContainer;
 import com.magicmod.mport.internal.v5.widget.ActionBarLayout;
+import com.magicmod.mport.util.ResourceMapper;
 import com.miui.internal.R;
 
 public class ActionBarMovableLayout extends ActionBarLayout {
@@ -25,7 +23,7 @@ public class ActionBarMovableLayout extends ActionBarLayout {
     public static final int DEFAULT_SPRING_BACK_DURATION = 0x320;//800;
     public static final int STATE_DOWN = 1;
     public static final int STATE_UNKNOWN = -1;
-    public static final int STATE_UP;
+    //public static final int STATE_UP;
     private static final String TAG = ActionBarMovableLayout.class.getSimpleName();
     private int mActivePointerId;
     private Callback mCallback;
@@ -261,8 +259,8 @@ public class ActionBarMovableLayout extends ActionBarLayout {
     }*/
     protected void onFinishInflate() {
         super.onFinishInflate();
-        mActionBarContainer = (ActionBarContainer) findViewById(ResourceMapper
-                .resolveReference(mContext, R.id.android_action_bar_container));//0x60b0007));
+        mActionBarContainer = (ActionBarContainer) findViewById(ResourceMapper.resolveReference(
+                mContext, R.id.android_action_bar_container));// 0x60b0007));
         mContentView = (ViewGroup) findViewById(0x1020002);
     }
 

@@ -19,7 +19,7 @@ public class MenuBarItem implements MenuItem {
     private static final int HIDDEN = 0x8;//8;
     private static final int IS_ACTION = 0x20;//32;
     private static final int IS_SECONDARY = -0x80000000;;//-2147483648;
-    private static final int NO_ICON;
+    //private static final int NO_ICON;
     private MenuItem.OnMenuItemClickListener mClickListener;
     private int mFlags;
     private Drawable mIconDrawable;
@@ -130,7 +130,7 @@ public class MenuBarItem implements MenuItem {
         if ((mClickListener != null) && mClickListener.onMenuItemClick(this)) {
             bool = true;
         } else { //cond_1
-            if (mMenu.dispatchMenuItemSelected(mMenu, this) != null) {
+            if (mMenu.dispatchMenuItemSelected(mMenu, this) != false) {
                 bool = true;
             } else {
                 if (mItemCallback != null) {
@@ -319,7 +319,7 @@ public class MenuBarItem implements MenuItem {
             this = setIcon(this.mMenu.getContext().getResources().getDrawable(paramInt));
         }*/
         if(iconResId != 0)
-            return setIcon(mMenu.getContext().getResources().getDrawable(i));
+            return setIcon(mMenu.getContext().getResources().getDrawable(iconResId));
         return this;
     }
 
