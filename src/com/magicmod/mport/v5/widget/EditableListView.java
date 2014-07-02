@@ -2,16 +2,24 @@
 package com.magicmod.mport.v5.widget;
 
 import android.content.Context;
+import android.content.res.Resources;
+import android.database.DataSetObserver;
 import android.util.AttributeSet;
 import android.util.LongSparseArray;
 import android.util.SparseBooleanArray;
+import android.view.ActionMode;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.CheckBox;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 
 import com.android.internal.R.integer;
 import com.magicmod.mport.v5.view.EditActionMode;
+import com.miui.internal.R;
 
 public class EditableListView extends ListView {
     private static final int KEY_CHECKBOX = 0x7fffffff;
@@ -268,52 +276,56 @@ public class EditableListView extends ListView {
         return bool;
     }
 
-    protected boolean isFooterOrHeader(int paramInt) {
-        int i = getHeaderViewsCount();
-        int j = getAdapter().getCount() - getFooterViewsCount();
-        if ((paramInt < i) && (paramInt >= j))
-            ;
-        for (boolean bool = true;; bool = false)
-            return bool;
+    protected boolean isFooterOrHeader(int position) {
+        int headers = getHeaderViewsCount();
+        int count = getAdapter().getCount() - getFooterViewsCount();
+        boolean flag;
+        if (position < headers && position >= count)
+            flag = true;
+        else
+            flag = false;
+        return flag;
     }
 
     public boolean isInActionMode() {
-        if (this.mActionMode != null)
-            ;
-        for (boolean bool = true;; bool = false)
-            return bool;
+        boolean flag;
+        if (mActionMode != null)
+            flag = true;
+        else
+            flag = false;
+        return flag;
     }
 
-    public boolean isItemIdChecked(long paramLong) {
-        boolean bool = false;
-        LongSparseArray localLongSparseArray = getCheckedIdStates();
-        if (localLongSparseArray != null) {
-            Integer localInteger = (Integer) localLongSparseArray.get(paramLong);
-            if ((localInteger == null) || (!isItemChecked(localInteger.intValue())))
-                break label45;
+    public boolean isItemIdChecked(long itemId) {
+        boolean retval = false;
+        LongSparseArray<Integer> checkedIdStates = getCheckedIdStates();
+        if (checkedIdStates != null) {
+            Integer position = (Integer) checkedIdStates.get(itemId);
+            if (position != null && isItemChecked(position.intValue()))
+                retval = true;
+            else
+                retval = false;
         }
-        label45: for (bool = true;; bool = false)
-            return bool;
+        return retval;
     }
 
-    public void setAdapter(ListAdapter paramListAdapter) {
+    public void setAdapter(ListAdapter adapter) {
         this.mListAdapterWrapper = new ListAdapterWrapper();
-        this.mListAdapterWrapper.setWrapped(paramListAdapter);
+        this.mListAdapterWrapper.setWrapped(adapter);
         super.setAdapter(this.mListAdapterWrapper);
     }
 
-    public void setMultiChoiceModeListener(
-            AbsListView.MultiChoiceModeListener paramMultiChoiceModeListener) {
-        this.mMultiChoiceModeListenerWrapper = new MultiChoiceModeListenerWrapper();
-        this.mMultiChoiceModeListenerWrapper.setWrapped(paramMultiChoiceModeListener);
-        super.setMultiChoiceModeListener(this.mMultiChoiceModeListenerWrapper);
+    public void setMultiChoiceModeListener(AbsListView.MultiChoiceModeListener listener) {
+        mMultiChoiceModeListenerWrapper = new MultiChoiceModeListenerWrapper();
+        mMultiChoiceModeListenerWrapper.setWrapped(listener);
+        super.setMultiChoiceModeListener(mMultiChoiceModeListenerWrapper);
     }
 
     public void uncheckAll() {
         checkAllInternal(false);
     }
 
-    protected void updateCheckStatus(EditActionMode paramEditActionMode)
+    /*protected void updateCheckStatus(EditActionMode paramEditActionMode)
   {
     Resources localResources;
     int j;
@@ -345,28 +357,57 @@ public class EditableListView extends ListView {
       j = 101450237;
       break label42;
     }
-  }
+  }*/
+    protected void updateCheckStatus(EditActionMode actionMode) {
+        if (actionMode != null) {
+            int checkItemCount = getCheckedItemCount();
+            Resources r = getContext().getResources();
+            int j;
+            //Menu menu;
+            boolean flag;
+            if (checkItemCount == 0) {
+                actionMode.setTitle(r.getString(/*0x60c01fb*/R.string.v5_edit_mode_title_empty));
+            } else {
+                String format = r.getQuantityString(R.plurals.v5_edit_mode_title, // 0x6100010,
+                        getCheckedItemCount());
+                Object aobj[] = new Object[1];
+                aobj[0] = Integer.valueOf(getCheckedItemCount());
+                actionMode.setTitle(String.format(format, aobj));
+            }
+            if (isAllChecked())
+                j = R.string.v5_deselect_all; //0x60c01fa;
+            else
+                j = R.string.v5_select_all; //0x60c01fd;
+            actionMode.setButton(com.android.internal.R.id.button2, // 0x102001a,
+                    j);
+            //menu = actionMode.getMenu();
+            if (getCheckedItemCount() != 0) {
+                flag = true;
+            } else {
+                flag = false;
+            }
+            //menu.setGroupEnabled(0, flag);
+            actionMode.getMenu().setGroupEnabled(0, flag);
+        }
+    }
 
-    protected void updateOnScreenCheckedView(View paramView, int paramInt, long paramLong) {
-        if (isFooterOrHeader(paramInt))
-            ;
-        while (true) {
-            return;
-            boolean bool = getCheckedItemPositions().get(paramInt);
-            CheckBox localCheckBox = findCheckBoxByView(paramView);
-            if (localCheckBox != null)
-                localCheckBox.setChecked(bool);
-            paramView.setActivated(bool);
+    protected void updateOnScreenCheckedView(View view, int position, long id) {
+        if (!isFooterOrHeader(position)) {
+            boolean checked = getCheckedItemPositions().get(position);
+            CheckBox checkBox = findCheckBoxByView(view);
+            if (checkBox != null)
+                checkBox.setChecked(checked);
+            view.setActivated(checked);
         }
     }
 
     protected void updateOnScreenCheckedViews() {
-        int i = getFirstVisiblePosition();
-        int j = getChildCount();
-        for (int k = 0; k < j; k++) {
-            View localView = getChildAt(k);
-            int m = i + k;
-            updateOnScreenCheckedView(localView, m, getAdapter().getItemId(m));
+        int firstPositioni = getFirstVisiblePosition();
+        int count = getChildCount();
+        for (int i = 0; i < count; i++) {
+            View child = getChildAt(i);
+            int position = firstPositioni + i;
+            updateOnScreenCheckedView(child, position, getAdapter().getItemId(position));
         }
     }
 
@@ -384,30 +425,35 @@ public class EditableListView extends ListView {
             return this.mWrapped.getCount();
         }
 
-        public Object getItem(int paramInt) {
-            return this.mWrapped.getItem(paramInt);
+        public Object getItem(int position) {
+            return this.mWrapped.getItem(position);
         }
 
-        public long getItemId(int paramInt) {
-            return this.mWrapped.getItemId(paramInt);
+        public long getItemId(int position) {
+            return this.mWrapped.getItemId(position);
         }
 
-        public int getItemViewType(int paramInt) {
-            return this.mWrapped.getItemViewType(paramInt);
+        public int getItemViewType(int position) {
+            return this.mWrapped.getItemViewType(position);
         }
 
-        public View getView(int paramInt, View paramView, ViewGroup paramViewGroup) {
-            View localView = this.mWrapped.getView(paramInt, paramView, paramViewGroup);
-            CheckBox localCheckBox = EditableListView.this.findCheckBoxByView(localView);
-            if (localCheckBox != null)
-                if (!EditableListView.this.isInActionMode())
-                    break label69;
-            label69: for (int i = 0;; i = 8) {
-                localCheckBox.setVisibility(i);
-                localCheckBox.setChecked(EditableListView.this.getCheckedItemPositions().get(
-                        paramInt));
-                return localView;
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            View view = mWrapped.getView(position, convertView, parent);
+            CheckBox checkBox = findCheckBoxByView(view);
+            if (checkBox != null) {
+                // int j;
+                if (isInActionMode()) {
+                    // j = 0;
+                    checkBox.setVisibility(0);
+                } else {
+                    // j = 8;
+                    checkBox.setVisibility(8);
+                }
+                // checkBox.setVisibility(j);
+                checkBox.setChecked(getCheckedItemPositions().get(position));
             }
+            return view;
         }
 
         public int getViewTypeCount() {
@@ -426,20 +472,22 @@ public class EditableListView extends ListView {
             return this.mWrapped.isEmpty();
         }
 
-        public boolean isEnabled(int paramInt) {
-            return this.mWrapped.isEnabled(paramInt);
+        public boolean isEnabled(int position) {
+            return this.mWrapped.isEnabled(position);
         }
 
-        public void registerDataSetObserver(DataSetObserver paramDataSetObserver) {
-            this.mWrapped.registerDataSetObserver(paramDataSetObserver);
+        @Override
+        public void registerDataSetObserver(DataSetObserver observer) {
+            this.mWrapped.registerDataSetObserver(observer);
         }
 
-        public void setWrapped(ListAdapter paramListAdapter) {
-            this.mWrapped = paramListAdapter;
+        public void setWrapped(ListAdapter wrapped) {
+            this.mWrapped = wrapped;
         }
 
-        public void unregisterDataSetObserver(DataSetObserver paramDataSetObserver) {
-            this.mWrapped.unregisterDataSetObserver(paramDataSetObserver);
+        @Override
+        public void unregisterDataSetObserver(DataSetObserver observer) {
+            this.mWrapped.unregisterDataSetObserver(observer);
         }
     }
 
@@ -449,51 +497,68 @@ public class EditableListView extends ListView {
         public MultiChoiceModeListenerWrapper() {
         }
 
-        public boolean onActionItemClicked(ActionMode paramActionMode, MenuItem paramMenuItem) {
-            EditActionMode localEditActionMode = (EditActionMode) paramActionMode;
-            if (paramMenuItem.getItemId() == 16908313)
-                localEditActionMode.finish();
-            while (true) {
-                return this.mWrapped.onActionItemClicked(localEditActionMode, paramMenuItem);
-                if (paramMenuItem.getItemId() == 16908314)
-                    if (EditableListView.this.isAllChecked())
-                        EditableListView.this.uncheckAll();
+        @Override
+        public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+            EditActionMode editActionMode = (EditActionMode) mode;
+            if (item.getItemId() != /* 0x1020019 */com.android.internal.R.id.button1) {
+                if (item.getItemId() == /* 0x102001a */com.android.internal.R.id.button2)
+                    if (isAllChecked())
+                        uncheckAll();
                     else
-                        EditableListView.this.checkAll();
+                        checkAll();
+                // if(true) goto _L4; else goto _L3
+                // return mWrapped.onActionItemClicked(editActionMode, item);
+            } else {
+                editActionMode.finish();
             }
+            return mWrapped.onActionItemClicked(editActionMode, item);
         }
 
-        public boolean onCreateActionMode(ActionMode paramActionMode, Menu paramMenu) {
+        @Override
+        /*public boolean onCreateActionMode(ActionMode paramActionMode, Menu paramMenu) {
             if (this.mWrapped.onCreateActionMode(paramActionMode, paramMenu))
                 EditableListView
                         .access$002(EditableListView.this, (EditActionMode) paramActionMode);
             for (boolean bool = true;; bool = false)
                 return bool;
+        }*/
+        public boolean onCreateActionMode(ActionMode actionmode, Menu menu) {
+            boolean flag;
+            if (mWrapped.onCreateActionMode(actionmode, menu)) {
+                // EditableListView.access$002(EditableListView.this,
+                // (EditActionMode)actionmode);
+                mActionMode = (EditActionMode) actionmode;
+                flag = true;
+            } else {
+                flag = false;
+            }
+            return flag;
         }
+        
 
+        @Override
         public void onDestroyActionMode(ActionMode paramActionMode) {
             this.mWrapped.onDestroyActionMode(paramActionMode);
-            EditableListView.access$002(EditableListView.this, null);
+            //EditableListView.access$002(EditableListView.this, null);
+            mActionMode = null;
         }
 
-        public void onItemCheckedStateChanged(ActionMode paramActionMode, int paramInt,
-                long paramLong, boolean paramBoolean) {
-            EditableListView.this
-                    .updateOnScreenCheckedView(
-                            EditableListView.this.getChildAt(paramInt
-                                    - EditableListView.this.getFirstVisiblePosition()), paramInt,
-                            paramLong);
-            EditableListView.this.updateCheckStatus((EditActionMode) paramActionMode);
-            this.mWrapped.onItemCheckedStateChanged(paramActionMode, paramInt, paramLong,
-                    paramBoolean);
+        @Override
+        public void onItemCheckedStateChanged(ActionMode mode, int position, long id,
+                boolean checked) {
+            updateOnScreenCheckedView(getChildAt(position - getFirstVisiblePosition()), position,
+                    id);
+            updateCheckStatus((EditActionMode) mode);
+            mWrapped.onItemCheckedStateChanged(mode, position, id, checked);
         }
 
-        public boolean onPrepareActionMode(ActionMode paramActionMode, Menu paramMenu) {
-            return this.mWrapped.onPrepareActionMode(paramActionMode, paramMenu);
+        @Override
+        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+            return this.mWrapped.onPrepareActionMode(mode, menu);
         }
 
-        public void setWrapped(AbsListView.MultiChoiceModeListener paramMultiChoiceModeListener) {
-            this.mWrapped = paramMultiChoiceModeListener;
+        public void setWrapped(AbsListView.MultiChoiceModeListener wrapped) {
+            this.mWrapped = wrapped;
         }
     }
 }
