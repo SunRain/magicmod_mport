@@ -66,12 +66,12 @@ public class PageScrollEffects {
                 }, 4);
         private final PageScrollEffects.ScrollAnimation mAnimation;
 
-        public DefaultPageScrollEffect(ViewGroup paramViewGroup) {
-            super();
-            this.mAnimation = new PageScrollEffects.ScrollAnimation(paramViewGroup);
+        public DefaultPageScrollEffect(ViewGroup v) {
+            super(v);
+            this.mAnimation = new PageScrollEffects.ScrollAnimation(v);
         }
 
-        private static int computOffset(int paramInt1, int paramInt2, int paramInt3,
+        /*private static int computOffset(int paramInt1, int paramInt2, int paramInt3,
                 float paramFloat) {
             int i;
             float f2;
@@ -87,6 +87,23 @@ public class PageScrollEffects {
                 i = paramInt2;
                 break;
             }
+        }*/
+        private static int computOffset(int top, int width, int height, float percent) {
+            int indent;
+            float coeff;
+            float offset;
+            int i1;
+            if (top < height)
+                indent = (top * width) / height;
+            else
+                indent = width;
+            coeff = percent * percent;
+            offset = (float) indent + (0.1F - coeff / 0.9F) * (float) width;
+            if (offset > 0.0F)
+                i1 = (int) offset;
+            else
+                i1 = 0;
+            return i1;
         }
 
         static void translateView(ViewGroup paramViewGroup, int paramInt1, int paramInt2,
@@ -166,13 +183,10 @@ public class PageScrollEffects {
             this.mAnimation.cancel();
         }
 
-        public void scroll(float paramFloat, boolean paramBoolean) {
-            if (this.mRoot.getVisibility() != 0)
-                ;
-            while (true) {
-                return;
-                this.mAnimation.setNavigator(paramBoolean);
-                this.mAnimation.scrollTo(paramFloat);
+        public void scroll(float percent, boolean isLeft) {
+            if (mRoot.getVisibility() == 0) {
+                mAnimation.setNavigator(isLeft);
+                mAnimation.scrollTo(percent);
             }
         }
 

@@ -26,9 +26,6 @@ public class SimplePool {
 
         public PoolInstance(SimplePool.Manager<T> manager, int size) {
             this.mManager = manager;
-            // this.mElements = ((Object[])Array.newInstance(Object.class,
-            // paramInt));
-            //this.mElements = (T[]) Array.newInstance(Object.class, size);
             mElements = (T[])(Object[])Array.newInstance(Object.class, size);
             this.mIndex = -1;
         }
