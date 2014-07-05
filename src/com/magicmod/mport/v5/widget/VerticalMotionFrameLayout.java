@@ -2,6 +2,7 @@
 package com.magicmod.mport.v5.widget;
 
 import android.content.Context;
+import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
@@ -58,7 +59,7 @@ public class VerticalMotionFrameLayout extends FrameLayout {
         }
     }
 
-    public boolean dispatchTouchEvent(MotionEvent paramMotionEvent) {
+    /*public boolean dispatchTouchEvent(MotionEvent paramMotionEvent) {
         int i = 0;
         int j = (int) paramMotionEvent.getX();
         int k = (int) paramMotionEvent.getY();
@@ -128,6 +129,111 @@ public class VerticalMotionFrameLayout extends FrameLayout {
             this.mModifiedTime = 0L;
             recycleVelocityTracker();
             break;
+        }
+    }*/
+
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        boolean handled = false; // v4
+        int x = (int) ev.getX(); // v10
+        int y = (int) ev.getY(); // v11
+
+        int action = 0xff & ev.getAction(); // v1
+        switch (action) {
+            case 0: // pswitch_0
+                initVelocityTracker();
+                VerticalMotionDetector.trackMovement(mVelocityTracker, ev);
+                // goto :goto_0
+                break;
+            case 1: // pswitch_2
+                if (mModifiedTime != 0L) { // cond_7 in
+                    if (Math.abs(y - mModifiedY) < mTouchSlop
+                            || Math.abs(x - mModifiedX) < mTouchSlop) { // cond_1
+                                                                        // in
+                        // if (Math.abs(x - mModifiedX) < mTouchSlop) { //cond_3
+                        // in
+                        // :cond_1
+                        if (mVelocityTracker != null) { // cond_6 in
+                            float dur = (float) (SystemClock.uptimeMillis() - mModifiedTime) / 1000F; // v3
+                            mVelocityTracker.computeCurrentVelocity(1000, mMaximumVelocity);
+                            float vX = mVelocityTracker.getXVelocity(); // v7
+                            float vY = mVelocityTracker.getYVelocity(); // v8
+                            int newX = bound(x + (int) (vX * dur), mLeft, mRight); // local
+                                                                                   // v5
+                            int newY = bound(y + (int) (vY * dur), mTop, mBottom); // local
+                                                                                   // v6
+                            if (Math.abs(newY - mModifiedY) < mTouchSlop
+                                    || Math.abs(newX - mModifiedX) < mTouchSlop) { // cond_2
+                                                                                   // in
+                                // if (Math.abs(newX - mModifiedX) < mTouchSlop)
+                                // { //cond_5 in
+                                // :cond_2
+                                // v12 0x3
+                                ev.setAction(0x3);
+                                // :cond_3
+                                // :goto_2
+                                // mModifiedTime = 0L;
+                                // :cond_4
+                                // :goto_3
+                                // recycleVelocityTracker();
+                                // goto/16 :goto_0
+                            } else {// cond_5 after
+                                // :cond_5
+                                ev.setAction(0x2);
+                                ev.setLocation(newX, newY);
+                                super.dispatchTouchEvent(ev);
+                                ev.setAction(0x1);
+                                // goto :goto_2
+                            }
+                            // } //cond_2 after
+                        } else { // cond_6 after
+                            // :cond_6
+                            ev.setAction(0x3);
+                            // goto :goto_2
+                        }
+                        // } //cond_3 after
+                    } // cond_1 after
+                    mModifiedTime = 0L;
+                } else { // cond_7 after
+                    if (mInertiaListener != null && mMotionDetector.isBeingDragged()
+                            && mVelocityTracker != null) { // cond_4 in
+                        super.dispatchTouchEvent(ev);
+                        handled = true;
+                        mVelocityTracker.computeCurrentVelocity(1000, mMaximumVelocity);
+                        int vy = (int) mVelocityTracker.getYVelocity(); // v9
+                        int anchor = mMotionDetector.getMotionStrategy().getLastAnchorPosition(); // v2
+                        mInertiaListener.onInertiaMotion(vy, anchor);
+                        // goto :goto_3
+                    } // cond_4 after
+                }
+                recycleVelocityTracker();
+                // goto/16 :goto_0
+                break;
+            case 2: // pswitch_1
+                if (mMotionDetector.isBeingDragged() && !mMotionDetector.isMovable(x, y)) { // cond_0
+                                                                                            // in
+                    ev.setAction(0x3);
+                    super.dispatchTouchEvent(ev);
+                    ev.setAction(0);
+                    mModifiedX = x;
+                    mModifiedY = y;
+                    mModifiedTime = SystemClock.uptimeMillis();
+                } // cond_0 after
+                VerticalMotionDetector.trackMovement(mVelocityTracker, ev);
+                // goto :goto_0
+                break;
+            case 3:// pswitch_3
+                mModifiedTime = 0L;
+                recycleVelocityTracker();
+                // goto/16 :goto_0
+                break;
+        }
+        // :goto_0
+        if (handled) { // cond_8 in
+            // v12 0x1
+            // :goto_1
+            return true;
+        } else { // cond_8 after
+            return super.dispatchTouchEvent(ev);
         }
     }
 

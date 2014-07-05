@@ -1,11 +1,31 @@
 
 package com.magicmod.mport.v5.widget;
 
+import android.content.Context;
+import android.graphics.drawable.Drawable;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewParent;
+import android.widget.ListAdapter;
+import android.widget.ListView;
+
+import com.android.internal.util.Predicate;
+
+import java.util.Comparator;
+import java.util.List;
+
 public class Views {
     static final String TAG = Views.class.getName();
     public static final Comparator<View> TOP_COMPARATOR = new Comparator() {
         public int compare(View paramAnonymousView1, View paramAnonymousView2) {
             return paramAnonymousView1.getTop() - paramAnonymousView2.getTop();
+        }
+
+        @Override
+        public int compare(Object lhs, Object rhs) {
+            // TODO Auto-generated method stub
+            return 0;
         }
     };
 

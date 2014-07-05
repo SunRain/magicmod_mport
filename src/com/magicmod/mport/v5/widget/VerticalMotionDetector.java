@@ -1,9 +1,12 @@
 
 package com.magicmod.mport.v5.widget;
 
+import android.util.Log;
+import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 
 public class VerticalMotionDetector {
     static final int INVALID_POINTER = -1;
@@ -19,57 +22,51 @@ public class VerticalMotionDetector {
     private VelocityTracker mVelocityTracker;
     private final ViewGroup mView;
 
-    public VerticalMotionDetector(ViewGroup paramViewGroup) {
-        this.mView = paramViewGroup;
+    public VerticalMotionDetector(ViewGroup view) {
+        this.mView = view;
         this.mView.setFocusable(true);
-        this.mView.setDescendantFocusability(262144);
+        this.mView.setDescendantFocusability(0x40000);
         this.mView.setWillNotDraw(false);
         this.mTouchSlop = ViewConfiguration.get(this.mView.getContext()).getScaledTouchSlop();
     }
 
-    private void cancelDragging(int paramInt1, int paramInt2) {
-        if (!this.mIsBeingDragged)
-            ;
-        while (true) {
-            return;
-            this.mIsBeingDragged = false;
-            if (this.mStrategy != null)
-                this.mStrategy.onMoveCancel(this.mView, paramInt1, paramInt2);
+    private void cancelDragging(int x, int y) {
+        if (mIsBeingDragged) {
+            mIsBeingDragged = false;
+            if (mStrategy != null)
+                mStrategy.onMoveCancel(mView, x, y);
         }
     }
-
     private void clearVelocityTracker() {
         if (this.mVelocityTracker != null)
             this.mVelocityTracker.clear();
     }
 
-    private void finishDragging(int paramInt1, int paramInt2, boolean paramBoolean) {
-        if (!this.mIsBeingDragged)
-            ;
-        do {
-            return;
-            this.mIsBeingDragged = false;
-        } while (this.mStrategy == null);
-        MotionDetectListener localMotionDetectListener = this.mStrategy;
-        ViewGroup localViewGroup = this.mView;
-        int i = this.mStartMotionX;
-        int j = this.mStartMotionY;
-        if (paramBoolean)
-            ;
-        for (VelocityTracker localVelocityTracker = this.mVelocityTracker;; localVelocityTracker = null) {
-            localMotionDetectListener.onMoveFinish(localViewGroup, paramInt1, paramInt2, i, j,
-                    localVelocityTracker);
-            break;
+    private void finishDragging(int x, int y, boolean hasTracker) {
+        if (mIsBeingDragged) {
+            mIsBeingDragged = false;
+            if (mStrategy != null) {
+                //MotionDetectListener motiondetectlistener = mStrategy;
+               // ViewGroup viewgroup = mView;
+                //int k = mStartMotionX;
+                //int l = mStartMotionY;
+                //VelocityTracker velocitytracker;
+                if (hasTracker)
+                    //velocitytracker = mVelocityTracker;
+                    mStrategy.onMoveFinish(mView, x, y, mStartMotionX, mStartMotionY, mVelocityTracker);
+                else
+                    //velocitytracker = null;
+                    mStrategy.onMoveFinish(mView, x, y, mStartMotionX, mStartMotionY, null);
+                //motiondetectlistener.onMoveFinish(viewgroup, x, y, k, l, velocitytracker);
+            }
         }
     }
-
+    
     private void initOrResetVelocityTracker() {
-        if (this.mVelocityTracker == null)
-            this.mVelocityTracker = VelocityTracker.obtain();
-        while (true) {
-            return;
-            this.mVelocityTracker.clear();
-        }
+        if (mVelocityTracker == null)
+            mVelocityTracker = VelocityTracker.obtain();
+        else
+            mVelocityTracker.clear();
     }
 
     private void initVelocityTrackerIfNotExists() {
@@ -77,20 +74,20 @@ public class VerticalMotionDetector {
             this.mVelocityTracker = VelocityTracker.obtain();
     }
 
-    private void onSecondaryPointerDown(MotionEvent paramMotionEvent) {
-        int i = paramMotionEvent.getActionIndex();
-        int j = paramMotionEvent.getPointerId(i);
-        int k = (int) paramMotionEvent.getY(i);
-        int m = (int) paramMotionEvent.getX(i);
-        this.mActivePointerId = j;
-        this.mStartMotionY = k;
-        this.mStartMotionX = m;
-        this.mLastMotionY = k;
-        this.mLastMotionX = m;
+    private void onSecondaryPointerDown(MotionEvent ev) {
+        int index = ev.getActionIndex();
+        int id = ev.getPointerId(index);
+        int y = (int) ev.getY(index);
+        int x = (int) ev.getX(index);
+        this.mActivePointerId = id;
+        this.mStartMotionY = y;
+        this.mStartMotionX = x;
+        this.mLastMotionY = y;
+        this.mLastMotionX = x;
         clearVelocityTracker();
     }
 
-    private void onSecondaryPointerUp(MotionEvent paramMotionEvent) {
+    /*private void onSecondaryPointerUp(MotionEvent paramMotionEvent) {
         int i = (0xFF00 & paramMotionEvent.getAction()) >> 8;
         if (paramMotionEvent.getPointerId(i) == this.mActivePointerId)
             if (i != 0)
@@ -105,6 +102,26 @@ public class VerticalMotionDetector {
             this.mActivePointerId = paramMotionEvent.getPointerId(j);
             return;
         }
+    }*/
+
+    private void onSecondaryPointerUp(MotionEvent ev) {
+        int pointerIndex = (0xff00 & ev.getAction()) >> 8;
+        if (ev.getPointerId(pointerIndex) == mActivePointerId) {
+            int newPointerIndex;
+            int y;
+            int x;
+            if (pointerIndex == 0)
+                newPointerIndex = 1;
+            else
+                newPointerIndex = 0;
+            y = (int) ev.getY(newPointerIndex);
+            x = (int) ev.getX(newPointerIndex);
+            mStartMotionY = y;
+            mStartMotionX = x;
+            mLastMotionY = y;
+            mLastMotionX = x;
+            mActivePointerId = ev.getPointerId(newPointerIndex);
+        }
     }
 
     private void recycleVelocityTracker() {
@@ -114,7 +131,7 @@ public class VerticalMotionDetector {
         }
     }
 
-    private void startDragging(int paramInt1, int paramInt2) {
+    /*private void startDragging(int paramInt1, int paramInt2) {
         this.mStartMotionY = paramInt2;
         this.mStartMotionX = paramInt1;
         if (this.mIsBeingDragged)
@@ -125,15 +142,23 @@ public class VerticalMotionDetector {
             if (this.mStrategy != null)
                 this.mStrategy.onMoveStart(this.mView, paramInt1, paramInt2);
         }
+    }*/
+    private void startDragging(int x, int y) {
+        mStartMotionY = y;
+        mStartMotionX = x;
+        if (!mIsBeingDragged) {
+            mIsBeingDragged = true;
+            if (mStrategy != null)
+                mStrategy.onMoveStart(mView, x, y);
+        }
     }
 
-    public static void trackMovement(VelocityTracker paramVelocityTracker,
-            MotionEvent paramMotionEvent) {
-        float f1 = paramMotionEvent.getRawX() - paramMotionEvent.getX();
-        float f2 = paramMotionEvent.getRawY() - paramMotionEvent.getY();
-        paramMotionEvent.offsetLocation(f1, f2);
-        paramVelocityTracker.addMovement(paramMotionEvent);
-        paramMotionEvent.offsetLocation(-f1, -f2);
+    public static void trackMovement(VelocityTracker tracker, MotionEvent event) {
+        float deltaX = event.getRawX() - event.getX();
+        float deltaY = event.getRawY() - event.getY();
+        event.offsetLocation(deltaX, deltaY);
+        tracker.addMovement(event);
+        event.offsetLocation(-deltaX, -deltaY);
     }
 
     public MotionDetectListener getMotionStrategy() {
@@ -144,15 +169,18 @@ public class VerticalMotionDetector {
         return this.mIsBeingDragged;
     }
 
-    public boolean isMovable(int paramInt1, int paramInt2) {
-        if (this.mStrategy != null)
-            ;
-        for (boolean bool = this.mStrategy.isMovable(this.mView, paramInt1, paramInt2,
-                this.mStartMotionX, this.mStartMotionY);; bool = true)
-            return bool;
+    public boolean isMovable(int x, int y) {
+        boolean flag;
+        if (mStrategy != null)
+            flag = mStrategy.isMovable(mView, x, y, mStartMotionX, mStartMotionY);
+        else
+            flag = true;
+        return flag;
     }
 
     public boolean onInterceptTouchEvent(MotionEvent paramMotionEvent) {
+        //TODO: fix it
+        
         boolean bool = false;
         MotionDetectListener localMotionDetectListener = this.mStrategy;
         if (localMotionDetectListener == null)
@@ -249,6 +277,8 @@ public class VerticalMotionDetector {
     }
 
     public boolean onTouchEvent(MotionEvent paramMotionEvent) {
+      //TODO: fix it
+        
         MotionDetectListener localMotionDetectListener = this.mStrategy;
         boolean bool;
         if (localMotionDetectListener == null) {
@@ -344,7 +374,7 @@ public class VerticalMotionDetector {
         }
     }
 
-    public void setMotionStrategy(MotionDetectListener paramMotionDetectListener) {
-        this.mStrategy = paramMotionDetectListener;
+    public void setMotionStrategy(MotionDetectListener strategy) {
+        this.mStrategy = strategy;
     }
 }

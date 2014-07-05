@@ -146,7 +146,7 @@ public class TabContainerLayout extends HorizontalScrollView implements View.OnC
     }
 
     public int findCurrentTabPos() {
-        return findTabPosition(this.mSelectedTab);
+        return findTabPosition(mSelectedTab);
     }
 
     public int findTabPosition(ActionBar.Tab tab) {
