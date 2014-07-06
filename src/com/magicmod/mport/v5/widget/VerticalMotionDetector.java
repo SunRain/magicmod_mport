@@ -1,6 +1,7 @@
 
 package com.magicmod.mport.v5.widget;
 
+import android.R.integer;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
@@ -37,6 +38,7 @@ public class VerticalMotionDetector {
                 mStrategy.onMoveCancel(mView, x, y);
         }
     }
+
     private void clearVelocityTracker() {
         if (this.mVelocityTracker != null)
             this.mVelocityTracker.clear();
@@ -46,22 +48,24 @@ public class VerticalMotionDetector {
         if (mIsBeingDragged) {
             mIsBeingDragged = false;
             if (mStrategy != null) {
-                //MotionDetectListener motiondetectlistener = mStrategy;
-               // ViewGroup viewgroup = mView;
-                //int k = mStartMotionX;
-                //int l = mStartMotionY;
-                //VelocityTracker velocitytracker;
+                // MotionDetectListener motiondetectlistener = mStrategy;
+                // ViewGroup viewgroup = mView;
+                // int k = mStartMotionX;
+                // int l = mStartMotionY;
+                // VelocityTracker velocitytracker;
                 if (hasTracker)
-                    //velocitytracker = mVelocityTracker;
-                    mStrategy.onMoveFinish(mView, x, y, mStartMotionX, mStartMotionY, mVelocityTracker);
+                    // velocitytracker = mVelocityTracker;
+                    mStrategy.onMoveFinish(mView, x, y, mStartMotionX, mStartMotionY,
+                            mVelocityTracker);
                 else
-                    //velocitytracker = null;
+                    // velocitytracker = null;
                     mStrategy.onMoveFinish(mView, x, y, mStartMotionX, mStartMotionY, null);
-                //motiondetectlistener.onMoveFinish(viewgroup, x, y, k, l, velocitytracker);
+                // motiondetectlistener.onMoveFinish(viewgroup, x, y, k, l,
+                // velocitytracker);
             }
         }
     }
-    
+
     private void initOrResetVelocityTracker() {
         if (mVelocityTracker == null)
             mVelocityTracker = VelocityTracker.obtain();
@@ -87,22 +91,16 @@ public class VerticalMotionDetector {
         clearVelocityTracker();
     }
 
-    /*private void onSecondaryPointerUp(MotionEvent paramMotionEvent) {
-        int i = (0xFF00 & paramMotionEvent.getAction()) >> 8;
-        if (paramMotionEvent.getPointerId(i) == this.mActivePointerId)
-            if (i != 0)
-                break label79;
-        label79: for (int j = 1;; j = 0) {
-            int k = (int) paramMotionEvent.getY(j);
-            int m = (int) paramMotionEvent.getX(j);
-            this.mStartMotionY = k;
-            this.mStartMotionX = m;
-            this.mLastMotionY = k;
-            this.mLastMotionX = m;
-            this.mActivePointerId = paramMotionEvent.getPointerId(j);
-            return;
-        }
-    }*/
+    /*
+     * private void onSecondaryPointerUp(MotionEvent paramMotionEvent) { int i =
+     * (0xFF00 & paramMotionEvent.getAction()) >> 8; if
+     * (paramMotionEvent.getPointerId(i) == this.mActivePointerId) if (i != 0)
+     * break label79; label79: for (int j = 1;; j = 0) { int k = (int)
+     * paramMotionEvent.getY(j); int m = (int) paramMotionEvent.getX(j);
+     * this.mStartMotionY = k; this.mStartMotionX = m; this.mLastMotionY = k;
+     * this.mLastMotionX = m; this.mActivePointerId =
+     * paramMotionEvent.getPointerId(j); return; } }
+     */
 
     private void onSecondaryPointerUp(MotionEvent ev) {
         int pointerIndex = (0xff00 & ev.getAction()) >> 8;
@@ -131,18 +129,13 @@ public class VerticalMotionDetector {
         }
     }
 
-    /*private void startDragging(int paramInt1, int paramInt2) {
-        this.mStartMotionY = paramInt2;
-        this.mStartMotionX = paramInt1;
-        if (this.mIsBeingDragged)
-            ;
-        while (true) {
-            return;
-            this.mIsBeingDragged = true;
-            if (this.mStrategy != null)
-                this.mStrategy.onMoveStart(this.mView, paramInt1, paramInt2);
-        }
-    }*/
+    /*
+     * private void startDragging(int paramInt1, int paramInt2) {
+     * this.mStartMotionY = paramInt2; this.mStartMotionX = paramInt1; if
+     * (this.mIsBeingDragged) ; while (true) { return; this.mIsBeingDragged =
+     * true; if (this.mStrategy != null) this.mStrategy.onMoveStart(this.mView,
+     * paramInt1, paramInt2); } }
+     */
     private void startDragging(int x, int y) {
         mStartMotionY = y;
         mStartMotionX = x;
@@ -178,9 +171,9 @@ public class VerticalMotionDetector {
         return flag;
     }
 
-    public boolean onInterceptTouchEvent(MotionEvent paramMotionEvent) {
-        //TODO: fix it
-        
+    /*public boolean onInterceptTouchEvent(MotionEvent paramMotionEvent) {
+        // TODO: fix it
+
         boolean bool = false;
         MotionDetectListener localMotionDetectListener = this.mStrategy;
         if (localMotionDetectListener == null)
@@ -274,11 +267,135 @@ public class VerticalMotionDetector {
                 }
             }
         }
+    }*/
+
+    public boolean onInterceptTouchEvent(MotionEvent ev) {
+        // const/4 v5, -0x1
+        // const/4 v12, 0x1
+        // const/4 v1, 0x0
+        MotionDetectListener strategy = mStrategy; // v0
+        if (strategy == null) { // cond_0 in
+            // :goto_0
+            return false; // return v1
+        } // cond_0 after
+
+        // :cond_0
+        int action = ev.getAction(); // v6
+        // const/4 v4, 0x2
+        if (action == 2 && mIsBeingDragged != false) { // cond_1 in
+            return true;
+        } // cond_1 after
+
+        int x, y, pointerIndex;
+        switch (action & 0xFF) {
+            case 0: // pswitch_2
+                y = (int) ev.getY(); // v3
+                x = (int) ev.getX(); // v2
+                mLastMotionY = y;
+                mLastMotionX = x;
+                mActivePointerId = ev.getPointerId(0);
+                initOrResetVelocityTracker();
+                trackMovement(mVelocityTracker, ev);
+                if (strategy.moveImmediately(mView, x, y)) {
+                    startDragging(x, y);
+                } else {
+                    cancelDragging(x, y);
+                }
+                // goto/16 :goto_1
+                break;
+            case 1: // pswitch_3
+            case 3: // pswitch_3
+                pointerIndex = ev.findPointerIndex(mActivePointerId); // v9
+
+                if (pointerIndex < 0) { // :cond_6 in
+                    x = mLastMotionX; // v2
+                    y = mLastMotionY; // v3
+                } else {
+                    x = (int) ev.getX(pointerIndex); // v2
+                    y = (int) ev.getY(pointerIndex); // v3
+                }
+                // :goto_2
+                if (action == 1) { // cond_7 in
+                    finishDragging(x, y, false);
+                    // :goto_3
+                    // mActivePointerId = -1;
+                    // recycleVelocityTracker();
+                    // goto/16 :goto_1
+                } else {// cond_7 after
+                    cancelDragging(x, y);
+                }
+                // goto :goto_3
+                // :goto_3
+                mActivePointerId = -1;
+                recycleVelocityTracker();
+                // goto/16 :goto_1
+                // } //:cond_6 after
+                // int x = (int) ev.getX(pointerIndex); //v2
+                // int y = (int) ev.getY(pointerIndex); //v3
+                // goto :goto_2
+                break;
+            case 2: // pswitch_1
+                int activePointerId = mActivePointerId; // v7
+                if (activePointerId != -1) { // cond_2 in
+                    pointerIndex = ev.findPointerIndex(activePointerId); // v9
+                    if (pointerIndex < 0) { // cond_3 in
+                        Log.e(TAG,
+                                (new StringBuilder()).append("Invalid pointerId=")
+                                        .append(activePointerId)
+                                        .append(" in onInterceptTouchEvent").toString());
+                        // goto :goto_1
+                    } else { // cond_3 after
+                        y = (int) ev.getY(pointerIndex); // v3
+                        x = (int) ev.getX(pointerIndex); // v2
+                        if (!strategy.isMovable(mView, x, y, mLastMotionX, mLastMotionY)) { // cond_4
+                                                                                            // in
+                            clearVelocityTracker();
+                            // goto :goto_1
+                        } else {// cond_4 after
+                            // :cond_4
+                            int yDiff = Math.abs(y - mLastMotionY); // v11
+                            int xDiff = Math.abs(x - mLastMotionX); // v10
+                            if (yDiff > mTouchSlop && xDiff < yDiff) { // cond_2
+                                                                       // in
+                                initVelocityTrackerIfNotExists();
+                                trackMovement(mVelocityTracker, ev);
+                                startDragging(x, y);
+                                mLastMotionY = y;
+                                mLastMotionX = x;
+                                ViewParent parent = mView.getParent(); // v8
+                                if (parent != null) {
+                                    parent.requestDisallowInterceptTouchEvent(true);
+                                }
+                            } // cond_2 after
+                        }
+                    }
+                } // cond_2 after
+                break;
+            case 4: // pswitch_0
+            case 5: // pswitch_0
+                // v1 mIsBeingDragged
+                // goto :goto_0
+                //return mIsBeingDragged;
+                break;
+            case 6: // pswitch_4
+                onSecondaryPointerUp(ev);
+                pointerIndex = ev.findPointerIndex(0); // v9
+                mLastMotionY = (int) ev.getY(pointerIndex);
+                mLastMotionX = (int) ev.getX(pointerIndex);
+                // goto/16 :goto_1
+                break;
+        // default:
+        // break;
+        }
+        // :cond_2
+        // :goto_1
+        // :pswitch_0
+        return mIsBeingDragged;
     }
 
-    public boolean onTouchEvent(MotionEvent paramMotionEvent) {
-      //TODO: fix it
-        
+    /*public boolean onTouchEvent(MotionEvent paramMotionEvent) {
+        // TODO: fix it
+
         MotionDetectListener localMotionDetectListener = this.mStrategy;
         boolean bool;
         if (localMotionDetectListener == null) {
@@ -372,6 +489,164 @@ public class VerticalMotionDetector {
                 }
             }
         }
+    }*/
+    
+    public boolean onTouchEvent(MotionEvent ev) {
+        MotionDetectListener strategy = mStrategy; // v0
+        if (strategy == null) { // cond_0 in
+            // const/4 v1, 0x0
+            // :goto_0
+            return false; // return v1
+        } // cond_0 after
+        // :cond_0
+        initVelocityTrackerIfNotExists();
+        trackMovement(mVelocityTracker, ev);
+
+        int action = ev.getAction(); // v6
+        int x, y, pointerIndex;
+        switch (0xFF & action) {
+            case 0: // pswitch_1
+                y = (int) ev.getY(); // v13
+                x = (int) ev.getX(); // v2
+                mLastMotionY = y;
+                mLastMotionX = x;
+                // const/4 v1, 0x0
+                mActivePointerId = ev.getPointerId(0);
+                if (strategy.moveImmediately(mView, x, y)) { // cond_2 in
+                    startDragging(x, y);
+                    ViewParent parent = mView.getParent(); // v11
+                    if (parent != null) { // cond_1 in
+                        // const/4 v1, 0x1
+                        parent.requestDisallowInterceptTouchEvent(true);
+                        // goto :goto_1
+                    } // cond_1 after
+                } else {// cond_2 after
+                    // :cond_2
+                    cancelDragging(x, y);
+                    // goto :goto_1
+                }
+                // goto :goto_1
+                break;
+            case 1: // pswitch_3
+                if (mIsBeingDragged) { // cond_1 in
+                    pointerIndex = ev.findPointerIndex(mActivePointerId); // v12
+                    if (pointerIndex < 0) { // cond_8 in
+                        x = mLastMotionX; // v2
+                        y = mLastMotionY; // v13
+                    } else {
+                        x = (int) ev.getX(pointerIndex); // v2
+                        y = (int) ev.getY(pointerIndex); // v13
+                    }
+                    // :goto_3
+                    // const/4 v1, 0x1
+                    finishDragging(x, y, true);
+                    // const/4 v1, -0x1
+                    mActivePointerId = -1;
+                    recycleVelocityTracker();
+                    // goto/16 :goto_1
+                    // } //cond_8 after
+                    // x = (int) ev.getX(pointerIndex); //v2
+                    // y = (int) ev.getY(pointerIndex); //v13
+                    // goto :goto_3
+                } // cond_1 after
+                break;
+            case 2: // pswitch_2
+                int activePointerId = mActivePointerId; // v7
+                if (activePointerId != -1) { // cond_1 in
+                    int activePointerIndex = ev.findPointerIndex(activePointerId); // v8
+                    if (activePointerIndex < 0) { // cond_3 in
+                        Log.e(TAG,
+                                (new StringBuilder()).append("Invalid pointerId=")
+                                        .append(activePointerId)
+                                        .append(" in onInterceptTouchEvent").toString());
+                        // goto :goto_1
+                    } else {// cond_3 after
+
+                        // :cond_3
+                        y = (int) ev.getY(activePointerIndex); // v13
+                        x = (int) ev.getX(activePointerIndex); // v2
+
+                        int deltaY = mLastMotionY - y; // v10
+                        int adjust = 0x0; // v9
+                        if (!mIsBeingDragged && Math.abs(deltaY) > mTouchSlop) { // cond_5
+                                                                                 // in
+                            startDragging(x, y);
+                            ViewParent parent = mView.getParent(); // v11
+                            if (parent != null) { // cond_4 in
+                                parent.requestDisallowInterceptTouchEvent(true);
+                            } // cond_4 after
+
+                            if (deltaY > 0) { // cond_7 in
+                                adjust = -mTouchSlop;
+                            } else {
+                                adjust = mTouchSlop;
+                            }
+                        }
+                        // :cond_5
+                        // :goto_2
+                        if (mIsBeingDragged) { // cond_1 in
+                            if (!strategy
+                                    .onMove(mView, x, y + adjust, mStartMotionX, mStartMotionY)) { // cond_6
+                                                                                                   // in
+                                clearVelocityTracker();
+                            } // cond_6 after
+                              // :cond_6
+                            mLastMotionY = y;
+                            mLastMotionX = x;
+                            // goto/16 :goto_1
+                        } // cond_1 after
+                        // } //cond_7 after
+                        // :cond_7
+                        // adjust = mTouchSlop;
+                        // goto :goto_2
+                    } // cond_5 after
+                } // cond_1 after
+                  // goto/16 :goto_1
+                break;
+            case 3: // pswitch_4
+                if (mIsBeingDragged) { // cond_1 in
+                    pointerIndex = ev.findPointerIndex(mActivePointerId); // v12
+                    if (pointerIndex < 0) { // cond_9 in
+                        x = mLastMotionX; // v2
+                        y = mLastMotionY; // v13
+                    } else {
+                        x = (int) ev.getX(pointerIndex);
+                        y = (int) ev.getY(pointerIndex);
+                    }
+                    // :goto_4
+                    cancelDragging(x, y);
+                    // const/4 v1, -0x1
+                    mActivePointerId = -1;
+                    recycleVelocityTracker();
+                    // goto/16 :goto_1
+                    // } //cond_9 after
+                    // x = (int) ev.getX(pointerIndex);
+                    // y = (int) ev.getY(pointerIndex);
+                    // goto :goto_4
+
+                } // cond_1 after
+                break;
+            case 4: // pswitch_0
+                // const/4 v1, 0x1
+                // goto :goto_0
+                //return true;
+                break;
+            case 5: // pswitch_6
+                onSecondaryPointerDown(ev);
+                // goto/16 :goto_1
+                break;
+            case 6: // pswitch_5
+                onSecondaryPointerUp(ev);
+                // goto/16 :goto_1
+                break;
+            /*default:
+                break;*/
+        }
+        // :cond_1
+        // :goto_1
+        // const/4 v1, 0x1
+        // goto :goto_0 ==>: return v1
+        return true;
     }
 
     public void setMotionStrategy(MotionDetectListener strategy) {

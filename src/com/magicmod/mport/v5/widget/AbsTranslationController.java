@@ -125,7 +125,7 @@ public abstract class AbsTranslationController implements MotionDetectListener, 
     }
     
 
-    protected abstract int computVelocity(VelocityTracker paramVelocityTracker);
+    protected abstract int computVelocity(VelocityTracker tracker);
 
     protected void fling(View view, int x, int y, int startX,
             int startY, int velocity) {
@@ -135,8 +135,8 @@ public abstract class AbsTranslationController implements MotionDetectListener, 
                         - from, velocity, true, false);
     }
 
-    protected abstract int getAnchorPostion(View paramView, int paramInt1, int paramInt2,
-            int paramInt3, int paramInt4, int paramInt5);
+    protected abstract int getAnchorPostion(View v, int x, int y,
+            int startX, int startY, int velocity);
 
     /*protected int getDuration(int paramInt1, int paramInt2) {
         int i = Math.abs(paramInt1);
@@ -158,8 +158,8 @@ public abstract class AbsTranslationController implements MotionDetectListener, 
     }
     
 
-    protected abstract int getInertiaPosition(View paramView, int paramInt1, int paramInt2,
-            int paramInt3, int paramInt4, int paramInt5);
+    protected abstract int getInertiaPosition(View v, int x, int y,
+            int startX, int startY, int velocity);
 
     public int getLastAnchorPosition() {
         return this.mLastAnchorPostion;
