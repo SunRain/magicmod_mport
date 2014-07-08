@@ -7,11 +7,15 @@ import android.content.Context;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Parcelable;
+import android.os.SystemClock;
 import android.util.AttributeSet;
+import android.view.FocusFinder;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.view.animation.Interpolator;
 import android.widget.EdgeEffect;
 import android.widget.Scroller;
@@ -315,7 +319,7 @@ public class ViewPager extends ViewGroup {
             outRect.right = child.getRight();
             outRect.top = child.getTop();
             outRect.bottom = child.getBottom();
-            android.view.ViewParent parent = child.getParent();
+            ViewParent parent = child.getParent();
             while ((parent instanceof ViewGroup) && parent != this) {
                 ViewGroup group = (ViewGroup) parent;
                 outRect.left = outRect.left + group.getLeft();
@@ -328,7 +332,7 @@ public class ViewPager extends ViewGroup {
         return outRect;
     }
 
-    private ItemInfo infoForCurrentScrollPosition() {
+    /*private ItemInfo infoForCurrentScrollPosition() {
         float f1 = 0.0F;
         int i = getWidth();
         float f2;
@@ -376,8 +380,194 @@ public class ViewPager extends ViewGroup {
             f4 = localItemInfo.widthFactor;
             localObject = localItemInfo;
         }
-    }
+    }*/
+    
+    /*private ItemInfo infoForCurrentScrollPosition() {
+        //const/4 v8, 0x0
+        int width = getWidth(); //v12
+        float marginOffset;
+        if (width >0) { //cond_5 in
+            float scrollOffset = getScrollX() / width; //v11
+            
+            //:goto_0
+            if (width >0) { //cond_0 in
+                marginOffset = mPageMargin/width; //v8 
+            } //cond_0 after
+            
+            //:cond_0
+            
+            int lastPos = -1; //v5
+            int lastOffset = 0; //v4
+            int lastWidth =0 ;//v6
+            boolean first = true; //v0
+            ItemInfo lastItem = null; //v3
+            int i=0; //v1
+            
+            //:goto_1
+            
+            if (i < mItems.size()) { //cond_4 in
+                ItemInfo ii = mItems.get(i); //v2
+                
+                if (first == false && ii.position != lastPos +1) { //cond_1 in
+                    ii = mTempItem;
+                    //v13 = lastOffset + lastWidth + marginOffset
+                    ii.offset = lastOffset + lastWidth + marginOffset;
+                    ii.position = lastPos + 1;
+                    ii.widthFactor = mAdapter.getPageWidth(ii.position);
+                    i--;
+                } //cond_1 after
+                
+                //:cond_1
+                float offset = ii.offset; //v9
+                float leftBound = offset; //v7
+                float rightBound = marginOffset + (offset + ii.widthFactor); //v10
+                if (first == false) { //cond_2 in
+                    //FIXME should be >= ?
+                    //cmpl-float v13, v11, v7
+                    //if-ltz v13, :cond_4
+                    if(scrollOffset >= leftBound) { //cond_4 in
+                        
+                        //:cond_2
+                      //FIXME should be >= ?
+                        //cmpg-float v13, v11, v10
+                        //if-ltz v13, :cond_3
+                        if (scrollOffset >= rightBound) { //cond_3 in
+                            if ( i == mItems.size() -1) { //cond_6 in
+                                
+                                //:cond_3
+                                //move-object v3, v2
+                                //:cond_4
+                                return ii;
+                            } //cond_6 after
+                            
+                            //:cond_6
+                            //const/4 v0, 0x0
+                            
+                            lastPos = ii.position;
+                            lastOffset = (int) offset;
+                            lastWidth = (int) ii.widthFactor;
+                            lastItem = ii;
+                            i++;
+                            goto :goto_1
+                                    
+                        } //cond_3 after
+                        //:cond_3
+                        //move-object v3, v2
+                        //:cond_4
+                        return ii; //return-object v3
+                    } //cond_4 after
+                    return-object v3
+                    
+                } //cond_2 after
+                
+            } //cond_4 after
+            
+            
+        } //cond_5 after
+        
+        //:cond_5
+        move v11, v8
+        goto :goto_0
+        
+    }*/
 
+    //FIXME: Need to check this method
+    private ItemInfo infoForCurrentScrollPosition() {
+        // const/4 v8, 0x0
+        int width = getWidth(); // v12
+        float marginOffset = 0;
+        float scrollOffset;
+        if (width > 0) { // cond_5 in
+            scrollOffset = getScrollX() / width; // v11
+        } else {
+            scrollOffset = 0.0F;
+        }
+        // :goto_0
+        if (width > 0) { // cond_0 in
+            marginOffset = mPageMargin / width; // v8
+        } // cond_0 after
+
+        // :cond_0
+
+        int lastPos = -1; // v5
+        int lastOffset = 0; // v4
+        int lastWidth = 0;// v6
+        boolean first = true; // v0
+        ItemInfo lastItem = null; // v3
+        // int i=0; //v1
+
+        // :goto_1
+        for (int i = 0; i < mItems.size(); i++) { // cond_4 in
+            ItemInfo ii = mItems.get(i); // v2
+
+            if (first == false && ii.position != lastPos + 1) { // cond_1 in
+                ii = mTempItem;
+                // v13 = lastOffset + lastWidth + marginOffset
+                ii.offset = lastOffset + lastWidth + marginOffset;
+                ii.position = lastPos + 1;
+                ii.widthFactor = mAdapter.getPageWidth(ii.position);
+                i--;
+            } // cond_1 after
+
+            // :cond_1
+            float offset = ii.offset; // v9
+            float leftBound = offset; // v7
+            float rightBound = marginOffset + (offset + ii.widthFactor); // v10
+            if (first == false) { // cond_2 in
+                // FIXME should be >= ?
+                // cmpl-float v13, v11, v7
+                // if-ltz v13, :cond_4
+                if (scrollOffset >= leftBound) { // cond_4 in
+                    // :cond_2
+                    // FIXME should be >= ?
+                    // cmpg-float v13, v11, v10
+                    // if-ltz v13, :cond_3
+                    if (scrollOffset >= rightBound) { // cond_3 in
+                        if (i == mItems.size() - 1) { // cond_6 in
+                            // :cond_3
+                            // move-object v3, v2
+                            // :cond_4
+                            return ii;
+                        } // cond_6 after
+                          // :cond_6
+                          // const/4 v0, 0x0
+                        lastPos = ii.position;
+                        lastOffset = (int) offset;
+                        lastWidth = (int) ii.widthFactor;
+                        lastItem = ii;
+                        continue;// goto :goto_1
+                    } // cond_3 after
+                      // :cond_3
+                      // move-object v3, v2
+                      // :cond_4
+                    return ii; // return-object v3
+                } // cond_4 after
+                return lastItem;// return-object v3
+            } else {// cond_2 after
+                if (scrollOffset >= rightBound) { // cond_3 in
+                    if (i == mItems.size() - 1) { // cond_6 in
+                        // :cond_3
+                        // move-object v3, v2
+                        // :cond_4
+                        return ii;
+                    } // cond_6 after
+                      // :cond_6
+                      // const/4 v0, 0x0
+                    lastPos = ii.position;
+                    lastOffset = (int) offset;
+                    lastWidth = (int) ii.widthFactor;
+                    lastItem = ii;
+                    continue;// goto :goto_1
+                } // cond_3 after
+                  // :cond_3
+                  // move-object v3, v2
+                  // :cond_4
+                return lastItem; // return-object v3
+            }
+        }
+        return lastItem;
+    }
+    
     private boolean isGutterDrag(float f, float f1)
     {
         boolean flag;
@@ -464,66 +654,65 @@ public class ViewPager extends ViewGroup {
         return flag1;
     }
 
-    private boolean performDrag(float f)
-    {
-        boolean flag;
-        float f2;
-        int i;
-        float f3;
-        float f4;
-        boolean flag1;
-        boolean flag2;
-        flag = false;
-        float f1 = mLastMotionX - f;
-        mLastMotionX = f;
-        f2 = f1 + (float)getScrollX();
-        i = getWidth();
-        f3 = (float)i * mFirstOffset;
-        f4 = (float)i * mLastOffset;
-        flag1 = true;
-        flag2 = true;
-        ItemInfo iteminfo = (ItemInfo)mItems.get(0);
-        ItemInfo iteminfo1 = (ItemInfo)mItems.get(-1 + mItems.size());
-        if(iteminfo.position != 0)
-        {
-            flag1 = false;
-            f3 = iteminfo.offset * (float)i;
+    private boolean performDrag(float x) {
+        boolean needsInvalidate;
+        float scrollX;
+        int widthi;
+        float leftBound;
+        float rightBound;
+        boolean leftAbsolute;
+        boolean rightAbsolute;
+        needsInvalidate = false;
+        float deltaX = mLastMotionX - x;
+        mLastMotionX = x;
+        scrollX = deltaX + (float) getScrollX();
+        widthi = getWidth();
+        leftBound = (float) widthi * mFirstOffset;
+        rightBound = (float) widthi * mLastOffset;
+        leftAbsolute = true;
+        rightAbsolute = true;
+        ItemInfo firstItem = (ItemInfo) mItems.get(0);
+        ItemInfo lastItem = (ItemInfo) mItems.get(-1 + mItems.size());
+        if (firstItem.position != 0) {
+            leftAbsolute = false;
+            leftBound = firstItem.offset * (float) widthi;
         }
-        if(iteminfo1.position != -1 + mAdapter.getCount())
-        {
-            flag2 = false;
-            f4 = iteminfo1.offset * (float)i;
+        if (lastItem.position != -1 + mAdapter.getCount()) {
+            rightAbsolute = false;
+            rightBound = lastItem.offset * (float) widthi;
         }
-        if(f2 >= f3) goto _L2; else goto _L1
-_L1:
-        if(flag1)
-        {
-            float f6 = f3 - f2;
-            mLeftEdge.onPull(Math.abs(f6) / (float)i);
-            flag = true;
-        }
-        f2 = f3;
-_L4:
-        mLastMotionX = mLastMotionX + (f2 - (float)(int)f2);
-        scrollTo((int)f2, getScrollY());
-        pageScrolled((int)f2, true);
-        return flag;
-_L2:
-        if(f2 > f4)
-        {
-            if(flag2)
-            {
-                float f5 = f2 - f4;
-                mRightEdge.onPull(Math.abs(f5) / (float)i);
-                flag = true;
+        if (scrollX >= leftBound) {
+            if (scrollX > rightBound) {
+                if (rightAbsolute) {
+                    float over = scrollX - rightBound;
+                    mRightEdge.onPull(Math.abs(over) / (float) widthi);
+                    needsInvalidate = true;
+                }
+                scrollX = rightBound;
             }
-            f2 = f4;
+            // if(true) goto _L4; else goto _L3
+            mLastMotionX = mLastMotionX + (scrollX - (float) (int) scrollX);
+            scrollTo((int) scrollX, getScrollY());
+            pageScrolled((int) scrollX, true);
+            return needsInvalidate;
+        } else {
+            if (leftAbsolute) {
+                float over = leftBound - scrollX;
+                mLeftEdge.onPull(Math.abs(over) / (float) widthi);
+                needsInvalidate = true;
+            }
+            scrollX = leftBound;
         }
-        if(true) goto _L4; else goto _L3
-_L3:
+        
+        //FIXME : need add this?
+        mLastMotionX = mLastMotionX + (scrollX - (float) (int) scrollX);
+        scrollTo((int) scrollX, getScrollY());
+        pageScrolled((int) scrollX, true);
+        
+        return needsInvalidate;
     }
 
-    private void recomputeScrollPosition(int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
+    /*private void recomputeScrollPosition(int paramInt1, int paramInt2, int paramInt3, int paramInt4) {
         if ((paramInt2 > 0) && (!this.mItems.isEmpty())) {
             int j = paramInt1 + paramInt3;
             int k = paramInt2 + paramInt4;
@@ -547,6 +736,33 @@ _L3:
             scrollTo(i, getScrollY());
             break;
         }
+    }*/
+    private void recomputeScrollPosition(int width, int oldWidth, int margin, int oldMargin) {
+        if (oldWidth <= 0 || mItems.isEmpty()) {
+            ItemInfo ii = infoForPosition(mCurItem);
+            float fscrollOffset;
+            int scrollPos;
+            if (ii != null)
+                fscrollOffset = Math.min(ii.offset, mLastOffset);
+            else
+                fscrollOffset = 0.0F;
+            scrollPos = (int) (fscrollOffset * (float) width);
+            if (scrollPos != getScrollX()) {
+                completeScroll();
+                scrollTo(scrollPos, getScrollY());
+            }
+        } else {
+            int widthWithMargin = width + margin;
+            int oldWidthWithMargin = oldWidth + oldMargin;
+            int pageOffset = (int) (((float) getScrollX() / (float) oldWidthWithMargin) * (float) widthWithMargin);
+            scrollTo(pageOffset, getScrollY());
+            if (!mScroller.isFinished()) {
+                int newDuration = mScroller.getDuration() - mScroller.timePassed();
+                ItemInfo targetInfo = infoForPosition(mCurItem);
+                mScroller.startScroll(pageOffset, 0, (int) (targetInfo.offset * (float) width), 0,
+                        newDuration);
+            }
+        }
     }
 
     private void removeNonDecorViews() {
@@ -557,7 +773,7 @@ _L3:
             }
     }
 
-    private void setScrollState(int paramInt) {
+    /*private void setScrollState(int paramInt) {
         if (this.mScrollState == paramInt)
             ;
         while (true) {
@@ -568,11 +784,20 @@ _L3:
             if (this.mInternalPageChangeListener != null)
                 this.mInternalPageChangeListener.onPageScrollStateChanged(paramInt);
         }
+    }*/
+    private void setScrollState(int newState) {
+        if (mScrollState != newState) {
+            mScrollState = newState;
+            if (mOnPageChangeListener != null)
+                mOnPageChangeListener.onPageScrollStateChanged(newState);
+            if (mInternalPageChangeListener != null)
+                mInternalPageChangeListener.onPageScrollStateChanged(newState);
+        }
     }
 
-    private void setScrollingCacheEnabled(boolean paramBoolean) {
-        if (this.mScrollingCacheEnabled != paramBoolean)
-            this.mScrollingCacheEnabled = paramBoolean;
+    private void setScrollingCacheEnabled(boolean enabled) {
+        if (this.mScrollingCacheEnabled != enabled)
+            this.mScrollingCacheEnabled = enabled;
     }
 
     public void addFocusables(ArrayList<View> paramArrayList, int paramInt1, int paramInt2) {
@@ -597,32 +822,31 @@ _L3:
         }
     }
 
-    ItemInfo addNewItem(int paramInt1, int paramInt2) {
-        ItemInfo localItemInfo = new ItemInfo();
-        localItemInfo.position = paramInt1;
-        localItemInfo.object = this.mAdapter.instantiateItem(this, paramInt1);
-        localItemInfo.widthFactor = this.mAdapter.getPageWidth(paramInt1);
-        localItemInfo.hasActionMenu = this.mAdapter.hasActionMenu(paramInt1);
-        if ((paramInt2 < 0) || (paramInt2 >= this.mItems.size()))
-            this.mItems.add(localItemInfo);
-        while (true) {
-            return localItemInfo;
-            this.mItems.add(paramInt2, localItemInfo);
-        }
+    ItemInfo addNewItem(int position, int index) {
+        ItemInfo ii = new ItemInfo();
+        ii.position = position;
+        ii.object = mAdapter.instantiateItem(this, position);
+        ii.widthFactor = mAdapter.getPageWidth(position);
+        ii.hasActionMenu = mAdapter.hasActionMenu(position);
+        if (index < 0 || index >= mItems.size())
+            mItems.add(ii);
+        else
+            mItems.add(index, ii);
+        return ii;
     }
 
-    public void addTouchables(ArrayList<View> paramArrayList) {
+    public void addTouchables(ArrayList<View> views) {
         for (int i = 0; i < getChildCount(); i++) {
-            View localView = getChildAt(i);
-            if (localView.getVisibility() == 0) {
-                ItemInfo localItemInfo = infoForChild(localView);
-                if ((localItemInfo != null) && (localItemInfo.position == this.mCurItem))
-                    localView.addTouchables(paramArrayList);
+            View child = getChildAt(i);
+            if (child.getVisibility() == 0) {
+                ItemInfo ii = infoForChild(child);
+                if ((ii != null) && (ii.position == this.mCurItem))
+                    child.addTouchables(views);
             }
         }
     }
 
-    public void addView(View paramView, int paramInt, ViewGroup.LayoutParams paramLayoutParams) {
+    /*public void addView(View paramView, int paramInt, ViewGroup.LayoutParams paramLayoutParams) {
         if (!checkLayoutParams(paramLayoutParams))
             paramLayoutParams = generateLayoutParams(paramLayoutParams);
         LayoutParams localLayoutParams = (LayoutParams) paramLayoutParams;
@@ -636,6 +860,20 @@ _L3:
         while (true) {
             return;
             super.addView(paramView, paramInt, paramLayoutParams);
+        }
+    }*/
+    public void addView(View child, int index, ViewGroup.LayoutParams params) {
+        if (!checkLayoutParams(params))
+            params = generateLayoutParams(params);
+        LayoutParams lp = (LayoutParams) params;
+        lp.isDecor = lp.isDecor | (child instanceof Decor);
+        if (mInLayout) {
+            if (lp != null && lp.isDecor)
+                throw new IllegalStateException("Cannot add pager decor view during layout");
+            lp.needsMeasure = true;
+            addViewInLayout(child, index, params);
+        } else {
+            super.addView(child, index, params);
         }
     }
 
@@ -675,7 +913,7 @@ _L3:
         }
     }
 
-    public boolean beginFakeDrag() {
+    /*public boolean beginFakeDrag() {
         boolean bool = false;
         if ((this.mIsBeingDragged) || (!this.mDragEnabled))
             return bool;
@@ -695,6 +933,28 @@ _L3:
             break;
             this.mVelocityTracker.clear();
         }
+    }*/
+    public boolean beginFakeDrag() {
+        boolean flag = false;
+        if (!mIsBeingDragged && mDragEnabled) {
+            mFakeDragging = true;
+            setScrollState(1);
+            mLastMotionX = 0.0F;
+            mInitialMotionX = 0.0F;
+            long time;
+            MotionEvent ev;
+            if (mVelocityTracker == null)
+                mVelocityTracker = VelocityTracker.obtain();
+            else
+                mVelocityTracker.clear();
+            time = SystemClock.uptimeMillis();
+            ev = MotionEvent.obtain(time, time, 0, 0.0F, 0.0F, 0);
+            mVelocityTracker.addMovement(ev);
+            ev.recycle();
+            mFakeDragBeginTime = time;
+            flag = true;
+        }
+        return flag;
     }
 
     protected boolean canScroll(View paramView, boolean paramBoolean, int paramInt1, int paramInt2,
@@ -729,31 +989,30 @@ _L3:
         }
     }
 
-    protected boolean checkLayoutParams(ViewGroup.LayoutParams paramLayoutParams) {
-        if (((paramLayoutParams instanceof LayoutParams))
-                && (super.checkLayoutParams(paramLayoutParams)))
-            ;
-        for (boolean bool = true;; bool = false)
-            return bool;
+    protected boolean checkLayoutParams(ViewGroup.LayoutParams p) {
+        boolean flag;
+        if ((p instanceof LayoutParams) && super.checkLayoutParams(p))
+            flag = true;
+        else
+            flag = false;
+        return flag;
     }
 
     public void computeScroll() {
-        if ((!this.mScroller.isFinished()) && (this.mScroller.computeScrollOffset())) {
-            int i = getScrollX();
-            int j = getScrollY();
-            int k = this.mScroller.getCurrX();
-            int m = this.mScroller.getCurrY();
-            if ((i != k) || (j != m)) {
-                scrollTo(k, m);
-                if (!pageScrolled(k, false)) {
-                    this.mScroller.abortAnimation();
-                    scrollTo(0, m);
+        if (!mScroller.isFinished() && mScroller.computeScrollOffset()) {
+            int oldX = getScrollX();
+            int oldY = getScrollY();
+            int x = mScroller.getCurrX();
+            int y = mScroller.getCurrY();
+            if (oldX != x || oldY != y) {
+                scrollTo(x, y);
+                if (!pageScrolled(x, false)) {
+                    mScroller.abortAnimation();
+                    scrollTo(0, y);
                 }
             }
             postInvalidateOnAnimation();
-        }
-        while (true) {
-            return;
+        } else {
             completeScroll();
         }
     }
@@ -854,11 +1113,13 @@ _L3:
       requestLayout();
   }
 
-    public boolean dispatchKeyEvent(KeyEvent paramKeyEvent) {
-        if ((super.dispatchKeyEvent(paramKeyEvent)) || (executeKeyEvent(paramKeyEvent)))
-            ;
-        for (boolean bool = true;; bool = false)
-            return bool;
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        boolean flag;
+        if (super.dispatchKeyEvent(event) || executeKeyEvent(event))
+            flag = true;
+        else
+            flag = false;
+        return flag;
     }
 
     public boolean dispatchPopulateAccessibilityEvent(AccessibilityEvent paramAccessibilityEvent) {

@@ -158,15 +158,14 @@ public abstract class AbsTranslationController implements MotionDetectListener, 
     }
     
 
-    protected abstract int getInertiaPosition(View v, int x, int y,
-            int startX, int startY, int velocity);
+    protected abstract int getInertiaPosition(View v, int x, int y, int startX, int startY,
+            int velocity);
 
     public int getLastAnchorPosition() {
         return this.mLastAnchorPostion;
     }
 
-    protected abstract int getValidMovePosition(View paramView, int paramInt1, int paramInt2,
-            int paramInt3, int paramInt4);
+    protected abstract int getValidMovePosition(View v, int x, int y, int startX, int startY);
 
     /*public boolean isAnimationPlaying() {
         if (this.mAnimator != null)
@@ -295,7 +294,7 @@ public abstract class AbsTranslationController implements MotionDetectListener, 
         this.mTranslateListener = l;
     }
 
-    protected abstract void translate(View paramView, float paramFloat);
+    protected abstract void translate(View v, float t);
 
     public static abstract interface OnTranslateListener {
         public abstract void onTranslate(View paramView, float paramFloat);

@@ -133,7 +133,7 @@ public class VerticalTranslationController extends AbsTranslationController {
         return dst;    
     }
 
-    protected int getValidMovePosition(View paramView, int paramInt1, int paramInt2, int paramInt3,
+    /*protected int getValidMovePosition(View paramView, int paramInt1, int paramInt2, int paramInt3,
             int paramInt4) {
         int i = (int) (paramView.getTranslationY() + paramInt2 - paramInt4);
         int j;
@@ -146,27 +146,27 @@ public class VerticalTranslationController extends AbsTranslationController {
             else
                 j = i;
         }
+    }*/
+    @Override
+    protected int getValidMovePosition(View v, int x, int y, int startX, int startY) {
+        int posY = (int) ((v.getTranslationY() + (float) y) - (float) startY);
+        int dest;
+        if (posY < mMinYBounce)
+            dest = mMinYBounce;
+        else if (posY > mMaxYBounce)
+            dest = mMaxYBounce;
+        else
+            dest = posY;
+        return dest;
     }
 
-    public void onMoveStart(View paramView, int paramInt1, int paramInt2) {
-        super.onMoveStart(paramView, paramInt1, paramInt2);
-        this.mStartY = ((int) paramView.getY());
-    }
-
-    protected void translate(View paramView, float paramFloat) {
-        paramView.setTranslationY(paramFloat);
+    public void onMoveStart(View view, int x, int y) {
+        super.onMoveStart(view, x, y);
+        this.mStartY = ((int) view.getY());
     }
 
     @Override
-    protected int getValidMovePosition(View paramView, int paramInt1, int paramInt2, int paramInt3,
-            int paramInt4) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    protected void translate(View paramView, float paramFloat) {
-        // TODO Auto-generated method stub
-        
+    protected void translate(View v, float t) {
+        v.setTranslationY(t);
     }
 }

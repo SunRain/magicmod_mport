@@ -10,20 +10,18 @@ import com.magicmod.mport.v5.util.Factory;
 
 public class VerticalMotionStrategies {
     
-    public static boolean canListScroll(AdapterView<?> alv, int x, int y, int startX, int startY)
-    {
+    public static boolean canListScroll(AdapterView<?> alv, int x, int y, int startX, int startY) {
         boolean flag;
-        if(y == startY)
+        if (y == startY)
             flag = false;
-        else
-        if(y > startY)
+        else if (y > startY)
             flag = canListScrollDown(alv);
         else
             flag = canListScrollUp(alv);
         return flag;
     }
     
-    private static boolean canListScrollDown(AdapterView<?> paramAdapterView) {
+    /*private static boolean canListScrollDown(AdapterView<?> paramAdapterView) {
         boolean bool = true;
         if (paramAdapterView.getFirstVisiblePosition() > 0)
             ;
@@ -39,9 +37,29 @@ public class VerticalMotionStrategies {
             }
             label49: bool = false;
         }
-    }
+    }*/
 
-    private static boolean canListScrollUp(AdapterView<?> paramAdapterView) {
+    private static boolean canListScrollDown(AdapterView<?> alv) {
+        // const/4 v4, 0x1
+        if (alv.getFirstVisiblePosition() > 0) { // cond_1 in
+            // :cond_0
+            // :goto_0
+            return true;// return v4
+        } // cond_1 after
+
+        // :cond_1
+        int paddingTop = alv.getPaddingTop(); // v3
+        int count = alv.getChildCount(); // v1
+        for (int i = 0; i < count; i++) {
+            View c = alv.getChildAt(i);
+            if (c.getTop() < paddingTop) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /*private static boolean canListScrollUp(AdapterView<?> paramAdapterView) {
         boolean bool = true;
         if (paramAdapterView.getLastVisiblePosition() < -1 + paramAdapterView.getCount())
             ;
@@ -58,8 +76,28 @@ public class VerticalMotionStrategies {
             }
             label65: bool = false;
         }
-    }
+    }*/
 
+    private static boolean canListScrollUp(AdapterView<?> alv) {
+        // const/4 v4, 0x1
+        if (alv.getLastVisiblePosition() < alv.getCount() - 1) { // cond_1 in
+            // :cond_0
+            // :goto_0
+            return true;// return v4
+        } // cond_1 after
+
+        // :cond_1
+        int bottom = alv.getHeight() - alv.getPaddingBottom() - alv.getPaddingTop(); // v0
+        int count = alv.getChildCount(); // v2
+        for (int i = 0; i < count; i++) {
+            View c = alv.getChildAt(i); // v1
+            if (c.getBottom() >= bottom) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
     public static boolean canScrollViewScroll(ScrollView sv, int x, int y, int startX, int startY)
     {
         boolean flag;
@@ -70,7 +108,7 @@ public class VerticalMotionStrategies {
         return flag;
     }
 
-    private static boolean canScrollViewScrollDown(ScrollView paramScrollView) {
+    /*private static boolean canScrollViewScrollDown(ScrollView paramScrollView) {
         boolean bool = false;
         if (paramScrollView.getChildAt(0) == null)
             ;
@@ -79,6 +117,24 @@ public class VerticalMotionStrategies {
             if (paramScrollView.getScrollY() > 0)
                 bool = true;
         }
+    }*/
+
+    private static boolean canScrollViewScrollDown(ScrollView sv) {
+        // const/4 v1, 0x0
+        View child = sv.getChildAt(0); // v0
+        if (child == null) { // cond_1 in
+            // :cond_0
+            // :goto_0
+            return false; // return v1
+        } // cond_1 after
+
+        // :cond_1
+        if (sv.getScrollY() > 0) { // cond_0
+            // const/4 v1, 0x1
+            // goto :goto_0
+            return true;
+        } // cond_0 after
+        return false;
     }
 
     /*private static boolean canScrollViewScrollUp(ScrollView paramScrollView) {

@@ -138,12 +138,12 @@ public class NumberProgressView extends LinearLayout {
     }*/
     public boolean setProgress(int progress) {
         boolean flag = false;
-        if (progress >= 0 && progress <= 100 && progress != mCurProgress) {
+        if (progress >= 0 && progress <= MAX_PROGRESS && progress != mCurProgress) {
             mCurProgress = progress;
             if (progress > 99) {
                 mNumberProgress3.setVisibility(0);
-                setNumber(progress / 100, mNumberProgress3);
-                progress %= 100;
+                setNumber(progress / MAX_PROGRESS, mNumberProgress3);
+                progress %= MAX_PROGRESS;
             } else {
                 mNumberProgress3.setVisibility(8);
             }
